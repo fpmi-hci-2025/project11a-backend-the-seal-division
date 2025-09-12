@@ -1,1 +1,15 @@
-# project11a-backend-the-seal-division
+# Книжный онлайн-магазин
+
+# Description
+Данный репозиторий содержит backend-составляющую для проекта "Книжный онлайн-магазин"
+
+# Installation
+
+# Sub modules
+
+# Usage
+
+# Contributing
+- Кремко Тимофей
+- Напреенко Станислав
+- Яшенок Алина
