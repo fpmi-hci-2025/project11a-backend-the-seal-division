@@ -22,6 +22,7 @@ jobs:
 
     - name: Test API
       run: |
+        go mod tidy
         go run ./cmd/api/main.go &
         sleep 5
         curl -f http://localhost:8080/api/hello
