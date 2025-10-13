@@ -20,18 +20,14 @@ jobs:
       with:
         go-version: '1.21'
 
-    - name: Test API
+    - name: Install dependencies
+      run: go mod tidy
+
+    - name: Build and test Go application
       run: |
-        go mod tidy
-        PORT=8081 go run ./cmd/api/main.go &
-        SERVER_PID=$!
-        
-        sleep 10
-        
-        curl -f http://localhost:8081/health
-        curl -f http://localhost:8081/api/hello
-        
-        kill $SERVER_PID 2>/dev/null || true
+        # Просто проверяем что код компилируется
+        go build -o bookstore-app ./cmd/api
+        echo "Go application builds successfully"
 
     - name: Build Docker image
       run: docker build -t bookstore-api:latest .
@@ -39,9 +35,14 @@ jobs:
     - name: Test Docker container
       run: |
         docker run -d -p 8080:8080 --name test-api bookstore-api:latest
-        sleep 10
-        curl -f http://localhost:8080/api/hello
-        curl -f http://localhost:8080/health
+        echo "Waiting for container to start..."
+        sleep 15
+        
+        curl -f http://localhost:8080/health || (docker logs test-api && exit 1)
+        curl -f http://localhost:8080/api/hello || (docker logs test-api && exit 1)
+        
+        docker logs test-api
+        
         docker stop test-api
         docker rm test-api
 
@@ -57,7 +58,4 @@ jobs:
 
     - name: Deploy to Render
       run: |
-        echo "Деплой на Render будет настроен через webhook"
-        echo "Сборка прошла успешно, можно деплоить"
-      env:
-        RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+        echo "CI/CD passed! Ready for deployment to Render"
