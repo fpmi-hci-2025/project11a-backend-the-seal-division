@@ -47,10 +47,12 @@ jobs:
     - name: Test Docker container
       run: |
         docker run -d -p 8080:8080 --name test-api bookstore-api:latest
-        sleep 5
+        sleep 10
         docker ps
         curl -f http://localhost:8080/api/hello
+        curl -f http://localhost:8080/health
         docker stop test-api
+        docker rm test-api
 
   deploy:
     name: Deploy to Render
