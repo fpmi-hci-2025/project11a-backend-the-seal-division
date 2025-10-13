@@ -23,23 +23,15 @@ jobs:
     - name: Test API
       run: |
         go mod tidy
-        nohup go run ./cmd/api/main.go > server.log 2>&1 &
+        PORT=8081 go run ./cmd/api/main.go &
         SERVER_PID=$!
         
-        echo "Server PID: $SERVER_PID"
+        sleep 10
         
-        for i in {1..10}; do
-          if curl -s http://localhost:8080/health > /dev/null; then
-            echo "Server started successfully!"
-            break
-          fi
-          sleep 3
-        done
+        curl -f http://localhost:8081/health
+        curl -f http://localhost:8081/api/hello
         
-        curl -f http://localhost:8080/api/hello
-        curl -f http://localhost:8080/health
         kill $SERVER_PID 2>/dev/null || true
-        sleep 2
 
     - name: Build Docker image
       run: docker build -t bookstore-api:latest .
@@ -48,7 +40,6 @@ jobs:
       run: |
         docker run -d -p 8080:8080 --name test-api bookstore-api:latest
         sleep 10
-        docker ps
         curl -f http://localhost:8080/api/hello
         curl -f http://localhost:8080/health
         docker stop test-api
