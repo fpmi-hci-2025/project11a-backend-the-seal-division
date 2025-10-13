@@ -38,9 +38,6 @@ jobs:
         
         curl -f http://localhost:8080/api/hello
         curl -f http://localhost:8080/health
-        
-        kill $SERVER_PID
-        wait $SERVER_PID 2>/dev/null
 
     - name: Build Docker image
       run: docker build -t bookstore-api:latest .
