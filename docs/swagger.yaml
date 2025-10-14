@@ -1,16 +1,104 @@
 basePath: /api
-host: localhost:8080
+definitions:
+  main.HealthResponse:
+    properties:
+      message:
+        example: Server is running
+        type: string
+      status:
+        example: OK
+        type: string
+      timestamp:
+        example: "2025-01-01T00:00:00Z"
+        type: string
+      version:
+        example: 1.0.0
+        type: string
+    type: object
+  main.HelloResponse:
+    properties:
+      message:
+        example: Hello from BookStore API!
+        type: string
+      service:
+        example: bookstore-backend
+        type: string
+      version:
+        example: 1.0.0
+        type: string
+    type: object
+  main.InfoResponse:
+    properties:
+      description:
+        example: REST API for online bookstore
+        type: string
+      endpoints:
+        items:
+          type: string
+        type: array
+      name:
+        example: BookStore Backend API
+        type: string
+    type: object
+host: your-app.onrender.com
 info:
-  contact: {}
+  contact:
+    email: support@bookstore.com
+    name: API Support
+    url: http://www.swagger.io/support
   description: REST API для онлайн-магазина книг
   license:
     name: MIT
     url: https://opensource.org/licenses/MIT
   termsOfService: http://swagger.io/terms/
   title: BookStore Backend API
-  version: "1.0"
-paths: {}
+  version: 1.0.0
+paths:
+  /api/hello:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает приветственное сообщение
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.HelloResponse'
+      summary: Hello endpoint
+      tags:
+      - test
+  /api/info:
+    get:
+      consumes:
+      - application/json
+      description: Возвращает информацию об API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.InfoResponse'
+      summary: API information
+      tags:
+      - info
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Проверка здоровья сервера
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/main.HealthResponse'
+      summary: Health check
+      tags:
+      - health
 schemes:
-- http
 - https
 swagger: "2.0"
