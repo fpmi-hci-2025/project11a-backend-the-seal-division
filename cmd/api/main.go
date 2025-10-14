@@ -67,7 +67,7 @@ func main() {
 			c.JSON(http.StatusOK, gin.H{
 				"message": "Hello World from Bookstore Backend API!",
 				"version": "1.0.0",
-				"service": "bookstore-backend",
+				"service": "project11a-backend-the-seal-division",
 			})
 		})
 
