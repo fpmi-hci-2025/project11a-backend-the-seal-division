@@ -6,7 +6,7 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
-	_ "project11a-backend-the-seal-division/docs"
+	_ "bookstore-backend/docs"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 )
@@ -67,7 +67,7 @@ func main() {
 			c.JSON(http.StatusOK, gin.H{
 				"message": "Hello World from Bookstore Backend API!",
 				"version": "1.0.0",
-				"service": "project11a-backend-the-seal-division",
+				"service": "bookstore-backend",
 			})
 		})
 
