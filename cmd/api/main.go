@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	_ "bookstore-backend/docs"
@@ -12,16 +13,20 @@ import (
 )
 
 // @title BookStore Backend API
-// @version 1.0
+// @version 1.0.0
 // @description REST API для онлайн-магазина книг
 // @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@bookstore.com
 
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
 
-// @host localhost:8080
+// @host your-app.onrender.com
 // @BasePath /api
-// @schemes http https
+// @schemes https
 
 func main() {
 	port := os.Getenv("PORT")
@@ -37,67 +42,118 @@ func main() {
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
-	// Роут для проверки здоровья
-	// @Summary Проверка здоровья сервера
-	// @Description Проверяет, что сервер работает корректно
+	// HealthCheck
+	// @Summary Health check
+	// @Description Проверка здоровья сервера
 	// @Tags health
 	// @Accept json
 	// @Produce json
-	// @Success 200 {object} map[string]interface{} "Статус сервера"
+	// @Success 200 {object} HealthResponse
 	// @Router /health [get]
-	r.GET("/health", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"status":  "OK",
-			"message": "Server is running",
-			"port":    port,
-		})
-	})
+	r.GET("/health", healthCheck)
 
+	// API routes
 	api := r.Group("/api")
 	{
-		// Основной роут Hello World
-		// @Summary Тестовый эндпоинт
+		// Hello
+		// @Summary Hello endpoint
 		// @Description Возвращает приветственное сообщение
 		// @Tags test
 		// @Accept json
 		// @Produce json
-		// @Success 200 {object} map[string]interface{} "Приветственное сообщение"
-		// @Router /api/hello [get]
-		api.GET("/hello", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{
-				"message": "Hello World from Bookstore Backend API!",
-				"version": "1.0.0",
-				"service": "bookstore-backend",
-			})
-		})
+		// @Success 200 {object} HelloResponse
+		// @Router /hello [get]
+		api.GET("/hello", helloHandler)
 
-		// @Summary Информация об API
-		// @Description Возвращает информацию о доступных эндпоинтах
+		// Info
+		// @Summary API information
+		// @Description Возвращает информацию об API
 		// @Tags info
 		// @Accept json
 		// @Produce json
-		// @Success 200 {object} map[string]interface{} "Информация об API"
-		// @Router /api/info [get]
-		api.GET("/info", func(c *gin.Context) {
-			c.JSON(http.StatusOK, gin.H{
-				"name":        "Bookstore Backend API",
-				"description": "Минимальная демонстрационная версия API книжного магазина",
-				"endpoints": []string{
-					"GET  /health",
-					"GET  /api/hello",
-					"GET  /api/info",
-					"GET  /swagger/index.html",
-				},
-				"swagger": "/swagger/index.html",
-			})
-		})
+		// @Success 200 {object} InfoResponse
+		// @Router /info [get]
+		api.GET("/info", infoHandler)
 	}
 
 	fmt.Printf("Server starting on port %s\n", port)
-	fmt.Printf("Swagger docs available at http://localhost:%s/swagger/index.html\n", port)
+	fmt.Printf("Swagger docs: https://your-app.onrender.com/swagger/index.html\n")
 	
 	if err := r.Run(":" + port); err != nil {
 		fmt.Printf("Failed to start server: %v\n", err)
 		os.Exit(1)
 	}
+}
+
+// HealthResponse represents health check response
+type HealthResponse struct {
+	Status    string `json:"status" example:"OK"`
+	Message   string `json:"message" example:"Server is running"`
+	Version   string `json:"version" example:"1.0.0"`
+	Timestamp string `json:"timestamp" example:"2025-01-01T00:00:00Z"`
+}
+
+// @Summary Health check
+// @Description Проверка здоровья сервера
+// @Tags health
+// @Accept json
+// @Produce json
+// @Success 200 {object} HealthResponse
+// @Router /health [get]
+func healthCheck(c *gin.Context) {
+	c.JSON(http.StatusOK, HealthResponse{
+		Status:    "OK",
+		Message:   "BookStore API is running",
+		Version:   "1.0.0",
+		Timestamp: time.Now().Format(time.RFC3339),
+	})
+}
+
+// HelloResponse represents hello endpoint response
+type HelloResponse struct {
+	Message string `json:"message" example:"Hello from BookStore API!"`
+	Service string `json:"service" example:"bookstore-backend"`
+	Version string `json:"version" example:"1.0.0"`
+}
+
+// @Summary Hello endpoint
+// @Description Возвращает приветственное сообщение
+// @Tags test
+// @Accept json
+// @Produce json
+// @Success 200 {object} HelloResponse
+// @Router /api/hello [get]
+func helloHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, HelloResponse{
+		Message: "Hello from BookStore API!",
+		Service: "bookstore-backend",
+		Version: "1.0.0",
+	})
+}
+
+// InfoResponse represents API info response
+type InfoResponse struct {
+	Name        string   `json:"name" example:"BookStore Backend API"`
+	Description string   `json:"description" example:"REST API for online bookstore"`
+	Endpoints   []string `json:"endpoints"`
+}
+
+// @Summary API information
+// @Description Возвращает информацию об API
+// @Tags info
+// @Accept json
+// @Produce json
+// @Success 200 {object} InfoResponse
+// @Router /api/info [get]
+func infoHandler(c *gin.Context) {
+	c.JSON(http.StatusOK, InfoResponse{
+		Name:        "BookStore Backend API",
+		Description: "REST API for online bookstore",
+		Endpoints: []string{
+			"GET  /health",
+			"GET  /api/hello",
+			"GET  /api/info",
+			"GET  /swagger/index.html",
+		},
+	})
 }
