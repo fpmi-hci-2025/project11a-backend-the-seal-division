@@ -1,0 +1,12 @@
+{
+  "dir": "./cmd/api",
+  "output": "./docs",
+  "info": {
+    "title": "BookStore Backend API",
+    "description": "REST API для онлайн-магазина книг",
+    "version": "1.0.0"
+  },
+  "parseVendor": false,
+  "parseDependency": false,
+  "parseInternal": false
+}

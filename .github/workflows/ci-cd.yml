@@ -21,11 +21,30 @@ jobs:
         go-version: '1.21'
 
     - name: Install dependencies
-      run: go mod tidy
+      run: |
+        go mod tidy
+        go install github.com/swaggo/swag/cmd/swag@latest
 
+    - name: Generate Swagger documentation
+      run: |
+        swag init -g cmd/api/main.go -o ./docs
+        ls -la ./docs/
+
+    - name: Validate Swagger files
+      run: |
+        [ -f ./docs/swagger.json ] && echo "swagger.json generated" || exit 1
+        [ -f ./docs/swagger.yaml ] && echo "swagger.yaml generated" || exit 1
+      
+    - name: Upload Swagger artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: swagger-docs
+        path: |
+          docs/
+        retention-days: 30
+    
     - name: Build and test Go application
       run: |
-        # Просто проверяем что код компилируется
         go build -o bookstore-app ./cmd/api
         echo "Go application builds successfully"
 
