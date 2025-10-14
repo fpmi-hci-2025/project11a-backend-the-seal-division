@@ -1,0 +1,16 @@
+basePath: /api
+host: localhost:8080
+info:
+  contact: {}
+  description: REST API для онлайн-магазина книг
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://swagger.io/terms/
+  title: BookStore Backend API
+  version: "1.0"
+paths: {}
+schemes:
+- http
+- https
+swagger: "2.0"
