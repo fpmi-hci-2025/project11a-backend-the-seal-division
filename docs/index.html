@@ -1,0 +1,2490 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Книжный онлайн-магазин API</title>
+    <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        .swagger-ui .topbar {
+            background-color: #3f51b5;
+        }
+        .swagger-ui .info .title {
+            color: #3f51b5;
+        }
+        @media (max-width: 768px) {
+            .swagger-ui .opblock .opblock-summary {
+                display: flex;
+                flex-direction: column;
+            }
+            .swagger-ui .opblock .opblock-summary-method {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="swagger-ui"></div>
+    <script src="https://unpkg.com/swagger-ui-dist@4.5.0/swagger-ui-bundle.js"></script>
+    <script>
+        const spec = {
+            "openapi": "3.0.0",
+            "info": {
+                "title": "Книжный магазин API",
+                "description": "API для управления книжным магазином с функционалом авторизации, управления книгами, заказами и скидками",
+                "version": "1.0.0",
+                "contact": {
+                    "email": "fpm.kremko@bsu.com"
+                }
+            },
+            "servers": [
+                {
+                    "url": "https://project11a-backend-the-seal-division.onrender.com/api",
+                    "description": "Основной сервер API"
+                },
+            ],
+            "paths": {
+                "/login": {
+                    "post": {
+                        "tags": ["Аутентификация"],
+                        "summary": "Вход пользователя в систему",
+                        "description": "Аутентификация пользователя по логину и паролю (Пользователь/Админ)",
+                        "operationId": "loginUser",
+                        "requestBody": {
+                            "description": "Учетные данные пользователя",
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/LoginRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "Успешная аутентификация",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/LoginResponse"
+                                        }
+                                    }
+                                }
+                            },
+                            "401": {
+                                "description": "Неверные учетные данные",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "429": {
+                                "description": "Слишком много запросов",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "get": {
+                        "tags": ["Аутентификация"],
+                        "summary": "Проверка текущего состояния аутентификации",
+                        "description": "Проверяет, аутентифицирован ли текущий пользователь (Пользователь/Админ)",
+                        "operationId": "checkLoginStatus",
+                        "security": [
+                            {
+                                "bearerAuth": []
+                            }
+                        ],
+                        "responses": {
+                            "200": {
+                                "description": "Успешная проверка, пользователь аутентифицирован",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/UserInfo"
+                                        }
+                                    }
+                                }
+                            },
+                            "401": {
+                                "description": "Пользователь не аутентифицирован",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/register": {
+                    "post": {
+                        "tags": ["Аутентификация"],
+                        "summary": "Регистрация нового пользователя",
+                        "description": "Создание новой учетной записи пользователя (Пользователь/Админ)",
+                        "operationId": "registerUser",
+                        "requestBody": {
+                            "description": "Данные для регистрации нового пользователя",
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/RegisterRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "201": {
+                                "description": "Пользователь успешно зарегистрирован",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/RegisterResponse"
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Некорректные данные в запросе",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "409": {
+                                "description": "Пользователь с таким email уже существует",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/books/{id}": {
+                    "get": {
+                        "tags": ["Книги"],
+                        "summary": "Получение информации о книге по ID",
+                        "description": "Возвращает детальную информацию о книге по её идентификатору (Пользователь/Админ)",
+                        "operationId": "getBookById",
+                        "parameters": [
+                            {
+                                "name": "id",
+                                "in": "path",
+                                "description": "ID книги",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                }
+                            }
+                        ],
+                        "responses": {
+                            "200": {
+                                "description": "Книга найдена",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Book"
+                                        }
+                                    }
+                                }
+                            },
+                            "404": {
+                                "description": "Книга не найдена",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "post": {
+                        "tags": ["Книги"],
+                        "summary": "Добавление новой книги",
+                        "description": "Создание новой книги в каталоге (только Админ)",
+                        "operationId": "addBook",
+                        "security": [
+                            {
+                                "bearerAuth": []
+                            }
+                        ],
+                        "parameters": [
+                            {
+                                "name": "id",
+                                "in": "path",
+                                "description": "ID книги",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                }
+                            }
+                        ],
+                        "requestBody": {
+                            "description": "Данные для создания книги",
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/BookCreateRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "201": {
+                                "description": "Книга успешно создана",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Book"
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Некорректные данные в запросе",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "401": {
+                                "description": "Пользователь не аутентифицирован",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "403": {
+                                "description": "У пользователя нет прав на добавление книг",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "put": {
+                        "tags": ["Книги"],
+                        "summary": "Обновление информации о книге",
+                        "description": "Обновление информации о существующей книге (только Админ)",
+                        "operationId": "updateBook",
+                        "security": [
+                            {
+                                "bearerAuth": []
+                            }
+                        ],
+                        "parameters": [
+                            {
+                                "name": "id",
+                                "in": "path",
+                                "description": "ID книги",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                }
+                            }
+                        ],
+                        "requestBody": {
+                            "description": "Данные для обновления книги",
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/BookUpdateRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "Книга успешно обновлена",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Book"
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Некорректные данные в запросе",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "401": {
+                                "description": "Пользователь не аутентифицирован",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "403": {
+                                "description": "У пользователя нет прав на обновление книг",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "404": {
+                                "description": "Книга не найдена",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/books/{id}/reviews": {
+                    "get": {
+                        "tags": ["Отзывы"],
+                        "summary": "Получение отзывов о книге",
+                        "description": "Возвращает список отзывов о книге (Пользователь/Админ)",
+                        "operationId": "getBookReviews",
+                        "parameters": [
+                            {
+                                "name": "id",
+                                "in": "path",
+                                "description": "ID книги",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                }
+                            }
+                        ],
+                        "responses": {
+                            "200": {
+                                "description": "Отзывы успешно получены",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Review"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "404": {
+                                "description": "Книга не найдена",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "post": {
+                        "tags": ["Отзывы"],
+                        "summary": "Создание отзыва на книгу",
+                        "description": "Добавление нового отзыва на книгу (Пользователь/Админ)",
+                        "operationId": "createBookReview",
+                        "security": [
+                            {
+                                "bearerAuth": []
+                            }
+                        ],
+                        "parameters": [
+                            {
+                                "name": "id",
+                                "in": "path",
+                                "description": "ID книги",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                }
+                            }
+                        ],
+                        "requestBody": {
+                            "description": "Данные для создания отзыва",
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/ReviewCreateRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "201": {
+                                "description": "Отзыв успешно создан",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Review"
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Некорректные данные в запросе",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "401": {
+                                "description": "Пользователь не аутентифицирован",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "404": {
+                                "description": "Книга не найдена",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "put": {
+                        "tags": ["Отзывы"],
+                        "summary": "Редактирование отзыва на книгу",
+                        "description": "Обновление существующего отзыва на книгу (Пользователь/Админ)",
+                        "operationId": "updateBookReview",
+                        "security": [
+                            {
+                                "bearerAuth": []
+                            }
+                        ],
+                        "parameters": [
+                            {
+                                "name": "id",
+                                "in": "path",
+                                "description": "ID книги",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                }
+                            }
+                        ],
+                        "requestBody": {
+                            "description": "Данные для обновления отзыва",
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/ReviewUpdateRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "Отзыв успешно обновлен",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Review"
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Некорректные данные в запросе",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "401": {
+                                "description": "Пользователь не аутентифицирован",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "403": {
+                                "description": "У пользователя нет прав на редактирование этого отзыва",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "404": {
+                                "description": "Книга или отзыв не найдены",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "delete": {
+                        "tags": ["Отзывы"],
+                        "summary": "Удаление отзыва на книгу",
+                        "description": "Удаление отзыва на книгу (Пользователь/Админ)",
+                        "operationId": "deleteBookReview",
+                        "security": [
+                            {
+                                "bearerAuth": []
+                            }
+                        ],
+                        "parameters": [
+                            {
+                                "name": "id",
+                                "in": "path",
+                                "description": "ID книги",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                }
+                            },
+                            {
+                                "name": "review_id",
+                                "in": "query",
+                                "description": "ID отзыва для удаления",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                }
+                            }
+                        ],
+                        "responses": {
+                            "200": {
+                                "description": "Отзыв успешно удален",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Отзыв успешно удален"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "401": {
+                                "description": "Пользователь не аутентифицирован",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "403": {
+                                "description": "У пользователя нет прав на удаление этого отзыва",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "404": {
+                                "description": "Книга или отзыв не найдены",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/orders/{id}": {
+                    "post": {
+                        "tags": ["Заказы"],
+                        "summary": "Добавление книги в корзину или оформление заказа",
+                        "description": "Создание нового заказа или добавление книги в корзину (только Пользователь)",
+                        "operationId": "addToCartOrCheckout",
+                        "security": [
+                            {
+                                "bearerAuth": []
+                            }
+                        ],
+                        "parameters": [
+                            {
+                                "name": "id",
+                                "in": "path",
+                                "description": "ID заказа (или 'new' для нового заказа)",
+                                "required": true,
+                                "schema": {
+                                    "type": "string"
+                                }
+                            }
+                        ],
+                        "requestBody": {
+                            "description": "Данные для заказа",
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/OrderRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "201": {
+                                "description": "Книга добавлена в корзину или заказ успешно создан",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Order"
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Некорректные данные в запросе",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "401": {
+                                "description": "Пользователь не аутентифицирован",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "delete": {
+                        "tags": ["Заказы"],
+                        "summary": "Удаление книги из корзины",
+                        "description": "Удаление книги из корзины (только Пользователь)",
+                        "operationId": "removeFromCart",
+                        "security": [
+                            {
+                                "bearerAuth": []
+                            }
+                        ],
+                        "parameters": [
+                            {
+                                "name": "id",
+                                "in": "path",
+                                "description": "ID заказа",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                }
+                            }
+                        ],
+                        "requestBody": {
+                            "description": "Данные для удаления книги из корзины",
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/RemoveFromCartRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "Книга успешно удалена из корзины",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "object",
+                                            "properties": {
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Книга успешно удалена из корзины"
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Некорректные данные в запросе",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "401": {
+                                "description": "Пользователь не аутентифицирован",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "403": {
+                                "description": "У пользователя нет прав на удаление из этого заказа",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "404": {
+                                "description": "Заказ или книга не найдены",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/orders": {
+                    "post": {
+                        "tags": ["Заказы"],
+                        "summary": "Получение списка заказов",
+                        "description": "Возвращает список заказов с возможностью фильтрации",
+                        "operationId": "getOrders",
+                        "security": [
+                            {
+                                "bearerAuth": []
+                            }
+                        ],
+                        "requestBody": {
+                            "description": "Параметры фильтрации заказов",
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/OrdersFilterRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "Список заказов успешно получен",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Order"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Некорректные параметры фильтрации",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "401": {
+                                "description": "Пользователь не аутентифицирован",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "403": {
+                                "description": "У пользователя нет прав на просмотр заказов",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/discounts/{id}": {
+                    "post": {
+                        "tags": ["Скидки"],
+                        "summary": "Добавление новой скидки",
+                        "description": "Создание новой скидки в системе (только Админ)",
+                        "operationId": "addDiscount",
+                        "security": [
+                            {
+                                "bearerAuth": []
+                            }
+                        ],
+                        "parameters": [
+                            {
+                                "name": "id",
+                                "in": "path",
+                                "description": "ID скидки",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                }
+                            }
+                        ],
+                        "requestBody": {
+                            "description": "Данные для создания скидки",
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/DiscountCreateRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "201": {
+                                "description": "Скидка успешно создана",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Discount"
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Некорректные данные в запросе",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "401": {
+                                "description": "Пользователь не аутентифицирован",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "403": {
+                                "description": "У пользователя нет прав на добавление скидок",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "put": {
+                        "tags": ["Скидки"],
+                        "summary": "Обновление информации о скидке",
+                        "description": "Обновление информации о существующей скидке (только Админ)",
+                        "operationId": "updateDiscount",
+                        "security": [
+                            {
+                                "bearerAuth": []
+                            }
+                        ],
+                        "parameters": [
+                            {
+                                "name": "id",
+                                "in": "path",
+                                "description": "ID скидки для обновления",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                }
+                            }
+                        ],
+                        "requestBody": {
+                            "description": "Данные для обновления скидки",
+                            "required": true,
+                            "content": {
+                                "application/json": {
+                                    "schema": {
+                                        "$ref": "#/components/schemas/DiscountUpdateRequest"
+                                    }
+                                }
+                            }
+                        },
+                        "responses": {
+                            "200": {
+                                "description": "Скидка успешно обновлена",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Discount"
+                                        }
+                                    }
+                                }
+                            },
+                            "400": {
+                                "description": "Некорректные данные в запросе",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "401": {
+                                "description": "Пользователь не аутентифицирован",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "403": {
+                                "description": "У пользователя нет прав на обновление скидок",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "404": {
+                                "description": "Скидка не найдена",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/books/categories": {
+                    "get": {
+                        "tags": ["Книги"],
+                        "summary": "Получение списка категорий книг",
+                        "description": "Возвращает список доступных категорий книг (Пользователь)",
+                        "operationId": "getBookCategories",
+                        "responses": {
+                            "200": {
+                                "description": "Список категорий успешно получен",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Category"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/books/publishers": {
+                    "get": {
+                        "tags": ["Книги"],
+                        "summary": "Получение списка издательств",
+                        "description": "Возвращает список издательств книг (Пользователь)",
+                        "operationId": "getPublishers",
+                        "responses": {
+                            "200": {
+                                "description": "Список издательств успешно получен",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Publisher"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/books/authors": {
+                    "get": {
+                        "tags": ["Книги"],
+                        "summary": "Получение списка авторов",
+                        "description": "Возвращает список авторов книг (Пользователь)",
+                        "operationId": "getAuthors",
+                        "responses": {
+                            "200": {
+                                "description": "Список авторов успешно получен",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/Author"
+                                            }
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "/customers/{id}": {
+                    "get": {
+                        "tags": ["Клиенты"],
+                        "summary": "Получение информации о клиенте по ID",
+                        "description": "Возвращает информацию о клиенте по его идентификатору (только Админ)",
+                        "operationId": "getCustomerById",
+                        "security": [
+                            {
+                                "bearerAuth": []
+                            }
+                        ],
+                        "parameters": [
+                            {
+                                "name": "id",
+                                "in": "path",
+                                "description": "ID клиента",
+                                "required": true,
+                                "schema": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                }
+                            }
+                        ],
+                        "responses": {
+                            "200": {
+                                "description": "Клиент найден",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Customer"
+                                        }
+                                    }
+                                }
+                            },
+                            "401": {
+                                "description": "Пользователь не аутентифицирован",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "403": {
+                                "description": "У пользователя нет прав на просмотр данных клиента",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "404": {
+                                "description": "Клиент не найден",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            },
+                            "500": {
+                                "description": "Внутренняя ошибка сервера",
+                                "content": {
+                                    "application/json": {
+                                        "schema": {
+                                            "$ref": "#/components/schemas/Error"
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            },
+            "components": {
+                "schemas": {
+                    "LoginRequest": {
+                        "type": "object",
+                        "required": ["email", "password"],
+                        "properties": {
+                            "email": {
+                                "type": "string",
+                                "format": "email",
+                                "description": "Электронная почта пользователя",
+                                "example": "user@example.com"
+                            },
+                            "password": {
+                                "type": "string",
+                                "format": "password",
+                                "description": "Пароль пользователя",
+                                "example": "secret123"
+                            }
+                        }
+                    },
+                    "LoginResponse": {
+                        "type": "object",
+                        "properties": {
+                            "token": {
+                                "type": "string",
+                                "description": "JWT токен для аутентификации",
+                                "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                            },
+                            "user": {
+                                "$ref": "#/components/schemas/UserInfo"
+                            }
+                        }
+                    },
+                    "UserInfo": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "Уникальный идентификатор пользователя",
+                                "example": 1
+                            },
+                            "email": {
+                                "type": "string",
+                                "format": "email",
+                                "description": "Электронная почта пользователя",
+                                "example": "user@example.com"
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "Имя пользователя",
+                                "example": "Иван Иванов"
+                            },
+                            "role": {
+                                "type": "string",
+                                "description": "Роль пользователя",
+                                "enum": ["user", "admin", "manager"],
+                                "example": "user"
+                            }
+                        }
+                    },
+                    "RegisterRequest": {
+                        "type": "object",
+                        "required": ["email", "password", "name"],
+                        "properties": {
+                            "email": {
+                                "type": "string",
+                                "format": "email",
+                                "description": "Электронная почта пользователя",
+                                "example": "user@example.com"
+                            },
+                            "password": {
+                                "type": "string",
+                                "format": "password",
+                                "description": "Пароль пользователя",
+                                "example": "secret123"
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "Имя пользователя",
+                                "example": "Иван Иванов"
+                            },
+                            "phone": {
+                                "type": "string",
+                                "description": "Телефон пользователя",
+                                "example": "+7 (999) 123-45-67"
+                            },
+                            "address": {
+                                "type": "string",
+                                "description": "Адрес пользователя",
+                                "example": "г. Москва, ул. Примерная, д. 1, кв. 1"
+                            }
+                        }
+                    },
+                    "RegisterResponse": {
+                        "type": "object",
+                        "properties": {
+                            "token": {
+                                "type": "string",
+                                "description": "JWT токен для аутентификации",
+                                "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                            },
+                            "user": {
+                                "$ref": "#/components/schemas/UserInfo"
+                            }
+                        }
+                    },
+                    "Book": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "Уникальный идентификатор книги",
+                                "example": 1
+                            },
+                            "title": {
+                                "type": "string",
+                                "description": "Название книги",
+                                "example": "Война и мир"
+                            },
+                            "author_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID автора книги",
+                                "example": 1
+                            },
+                            "author": {
+                                "$ref": "#/components/schemas/Author"
+                            },
+                            "category_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID категории книги",
+                                "example": 1
+                            },
+                            "category": {
+                                "$ref": "#/components/schemas/Category"
+                            },
+                            "publisher_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID издательства книги",
+                                "example": 1
+                            },
+                            "publisher": {
+                                "$ref": "#/components/schemas/Publisher"
+                            },
+                            "isbn": {
+                                "type": "string",
+                                "description": "ISBN книги",
+                                "example": "978-3-16-148410-0"
+                            },
+                            "publication_year": {
+                                "type": "integer",
+                                "description": "Год издания книги",
+                                "example": 2020
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "Описание книги",
+                                "example": "Классический роман Льва Толстого о жизни русского дворянства во времена Наполеоновских войн."
+                            },
+                            "price": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "Цена книги",
+                                "example": 599.99
+                            },
+                            "available_quantity": {
+                                "type": "integer",
+                                "description": "Количество доступных экземпляров",
+                                "example": 10
+                            },
+                            "cover_image": {
+                                "type": "string",
+                                "description": "URL обложки книги",
+                                "example": "https://example.com/covers/war-and-peace.jpg"
+                            },
+                            "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Дата добавления книги в каталог"
+                            },
+                            "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Дата последнего обновления информации о книге"
+                            }
+                        }
+                    },
+                    "BookCreateRequest": {
+                        "type": "object",
+                        "required": ["title", "author_id", "category_id", "publisher_id", "price", "available_quantity"],
+                        "properties": {
+                            "title": {
+                                "type": "string",
+                                "description": "Название книги",
+                                "example": "Война и мир"
+                            },
+                            "author_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID автора книги",
+                                "example": 1
+                            },
+                            "category_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID категории книги",
+                                "example": 1
+                            },
+                            "publisher_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID издательства книги",
+                                "example": 1
+                            },
+                            "isbn": {
+                                "type": "string",
+                                "description": "ISBN книги",
+                                "example": "978-3-16-148410-0"
+                            },
+                            "publication_year": {
+                                "type": "integer",
+                                "description": "Год издания книги",
+                                "example": 2020
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "Описание книги",
+                                "example": "Классический роман Льва Толстого о жизни русского дворянства во времена Наполеоновских войн."
+                            },
+                            "price": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "Цена книги",
+                                "example": 599.99
+                            },
+                            "available_quantity": {
+                                "type": "integer",
+                                "description": "Количество доступных экземпляров",
+                                "example": 10
+                            },
+                            "cover_image": {
+                                "type": "string",
+                                "description": "URL обложки книги",
+                                "example": "https://example.com/covers/war-and-peace.jpg"
+                            }
+                        }
+                    },
+                    "BookUpdateRequest": {
+                        "type": "object",
+                        "required": ["id"],
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID книги для обновления",
+                                "example": 1
+                            },
+                            "title": {
+                                "type": "string",
+                                "description": "Название книги",
+                                "example": "Война и мир"
+                            },
+                            "author_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID автора книги",
+                                "example": 1
+                            },
+                            "category_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID категории книги",
+                                "example": 1
+                            },
+                            "publisher_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID издательства книги",
+                                "example": 1
+                            },
+                            "isbn": {
+                                "type": "string",
+                                "description": "ISBN книги",
+                                "example": "978-3-16-148410-0"
+                            },
+                            "publication_year": {
+                                "type": "integer",
+                                "description": "Год издания книги",
+                                "example": 2020
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "Описание книги",
+                                "example": "Классический роман Льва Толстого о жизни русского дворянства во времена Наполеоновских войн."
+                            },
+                            "price": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "Цена книги",
+                                "example": 599.99
+                            },
+                            "available_quantity": {
+                                "type": "integer",
+                                "description": "Количество доступных экземпляров",
+                                "example": 10
+                            },
+                            "cover_image": {
+                                "type": "string",
+                                "description": "URL обложки книги",
+                                "example": "https://example.com/covers/war-and-peace.jpg"
+                            }
+                        }
+                    },
+                    "Author": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "Уникальный идентификатор автора",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "Имя автора",
+                                "example": "Лев Толстой"
+                            },
+                            "biography": {
+                                "type": "string",
+                                "description": "Биография автора",
+                                "example": "Русский писатель, один из величайших писателей мира."
+                            }
+                        }
+                    },
+                    "Publisher": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "Уникальный идентификатор издательства",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "Название издательства",
+                                "example": "Эксмо"
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "Описание издательства",
+                                "example": "Крупнейшее издательство России."
+                            }
+                        }
+                    },
+                    "Category": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "Уникальный идентификатор категории",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "Название категории",
+                                "example": "Классическая литература"
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "Описание категории",
+                                "example": "Книги классической литературы различных авторов и эпох."
+                            }
+                        }
+                    },
+                    "Review": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "Уникальный идентификатор отзыва",
+                                "example": 1
+                            },
+                            "book_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID книги",
+                                "example": 1
+                            },
+                            "user_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID пользователя, оставившего отзыв",
+                                "example": 1
+                            },
+                            "user_name": {
+                                "type": "string",
+                                "description": "Имя пользователя, оставившего отзыв",
+                                "example": "Иван Иванов"
+                            },
+                            "rating": {
+                                "type": "integer",
+                                "description": "Оценка книги (от 1 до 5)",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "example": 4
+                            },
+                            "title": {
+                                "type": "string",
+                                "description": "Заголовок отзыва",
+                                "example": "Отличная книга!"
+                            },
+                            "content": {
+                                "type": "string",
+                                "description": "Текст отзыва",
+                                "example": "Очень интересная и захватывающая книга, рекомендую всем."
+                            },
+                            "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Дата создания отзыва"
+                            },
+                            "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Дата последнего обновления отзыва"
+                            }
+                        }
+                    },
+                    "ReviewCreateRequest": {
+                        "type": "object",
+                        "required": ["rating", "content"],
+                        "properties": {
+                            "rating": {
+                                "type": "integer",
+                                "description": "Оценка книги (от 1 до 5)",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "example": 4
+                            },
+                            "title": {
+                                "type": "string",
+                                "description": "Заголовок отзыва",
+                                "example": "Отличная книга!"
+                            },
+                            "content": {
+                                "type": "string",
+                                "description": "Текст отзыва",
+                                "example": "Очень интересная и захватывающая книга, рекомендую всем."
+                            }
+                        }
+                    },
+                    "ReviewUpdateRequest": {
+                        "type": "object",
+                        "required": ["review_id"],
+                        "properties": {
+                            "review_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID отзыва для обновления",
+                                "example": 1
+                            },
+                            "rating": {
+                                "type": "integer",
+                                "description": "Оценка книги (от 1 до 5)",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "example": 5
+                            },
+                            "title": {
+                                "type": "string",
+                                "description": "Заголовок отзыва",
+                                "example": "Превосходная книга!"
+                            },
+                            "content": {
+                                "type": "string",
+                                "description": "Текст отзыва",
+                                "example": "После повторного прочтения нашел много новых интересных деталей. Безусловно рекомендую!"
+                            }
+                        }
+                    },
+                    "OrderRequest": {
+                        "type": "object",
+                        "required": ["items"],
+                        "properties": {
+                            "items": {
+                                "type": "array",
+                                "description": "Список позиций в заказе",
+                                "items": {
+                                    "type": "object",
+                                    "required": ["book_id", "quantity"],
+                                    "properties": {
+                                        "book_id": {
+                                            "type": "integer",
+                                            "format": "int64",
+                                            "description": "ID книги",
+                                            "example": 1
+                                        },
+                                        "quantity": {
+                                            "type": "integer",
+                                            "description": "Количество экземпляров книги",
+                                            "example": 2
+                                        }
+                                    }
+                                }
+                            },
+                            "discount_code": {
+                                "type": "string",
+                                "description": "Код скидки",
+                                "example": "SUMMER2025"
+                            },
+                            "shipping_address": {
+                                "type": "string",
+                                "description": "Адрес доставки",
+                                "example": "г. Москва, ул. Примерная, д. 1, кв. 1"
+                            },
+                            "payment_method": {
+                                "type": "string",
+                                "description": "Метод оплаты",
+                                "enum": ["card", "cash", "online"],
+                                "example": "card"
+                            },
+                            "notes": {
+                                "type": "string",
+                                "description": "Примечания к заказу",
+                                "example": "Пожалуйста, звоните перед доставкой"
+                            }
+                        }
+                    },
+                    "RemoveFromCartRequest": {
+                        "type": "object",
+                        "required": ["book_id"],
+                        "properties": {
+                            "book_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID книги для удаления из корзины",
+                                "example": 1
+                            },
+                            "quantity": {
+                                "type": "integer",
+                                "description": "Количество экземпляров для удаления (если не указано, удаляется вся позиция)",
+                                "example": 1
+                            }
+                        }
+                    },
+                    "OrdersFilterRequest": {
+                        "type": "object",
+                        "properties": {
+                            "customer_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID клиента для фильтрации заказов",
+                                "example": 1
+                            },
+                            "status": {
+                                "type": "string",
+                                "description": "Статус заказов для фильтрации",
+                                "enum": ["pending", "processing", "shipped", "delivered", "cancelled"],
+                                "example": "delivered"
+                            },
+                            "date_from": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "Начальная дата для фильтрации",
+                                "example": "2025-01-01"
+                            },
+                            "date_to": {
+                                "type": "string",
+                                "format": "date",
+                                "description": "Конечная дата для фильтрации",
+                                "example": "2025-12-31"
+                            },
+                            "page": {
+                                "type": "integer",
+                                "description": "Номер страницы при пагинации",
+                                "example": 1
+                            },
+                            "limit": {
+                                "type": "integer",
+                                "description": "Количество заказов на странице",
+                                "example": 10
+                            }
+                        }
+                    },
+                    "Order": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "Уникальный идентификатор заказа",
+                                "example": 1
+                            },
+                            "customer_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID клиента, сделавшего заказ",
+                                "example": 1
+                            },
+                            "customer": {
+                                "$ref": "#/components/schemas/Customer"
+                            },
+                            "items": {
+                                "type": "array",
+                                "description": "Позиции заказа",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "book_id": {
+                                            "type": "integer",
+                                            "format": "int64",
+                                            "description": "ID книги",
+                                            "example": 1
+                                        },
+                                        "book": {
+                                            "$ref": "#/components/schemas/Book"
+                                        },
+                                        "quantity": {
+                                            "type": "integer",
+                                            "description": "Количество экземпляров книги",
+                                            "example": 2
+                                        },
+                                        "price": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "description": "Цена за единицу на момент заказа",
+                                            "example": 599.99
+                                        }
+                                    }
+                                }
+                            },
+                            "discount_code": {
+                                "type": "string",
+                                "description": "Код скидки, примененный к заказу",
+                                "example": "SUMMER2025"
+                            },
+                            "discount_amount": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "Сумма скидки",
+                                "example": 120
+                            },
+                            "total_amount": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "Общая сумма заказа",
+                                "example": 1079.98
+                            },
+                            "shipping_address": {
+                                "type": "string",
+                                "description": "Адрес доставки",
+                                "example": "г. Москва, ул. Примерная, д. 1, кв. 1"
+                            },
+                            "status": {
+                                "type": "string",
+                                "description": "Статус заказа",
+                                "enum": ["pending", "processing", "shipped", "delivered", "cancelled"],
+                                "example": "processing"
+                            },
+                            "payment_method": {
+                                "type": "string",
+                                "description": "Метод оплаты",
+                                "enum": ["card", "cash", "online"],
+                                "example": "card"
+                            },
+                            "payment_status": {
+                                "type": "string",
+                                "description": "Статус оплаты",
+                                "enum": ["pending", "paid", "failed", "refunded"],
+                                "example": "paid"
+                            },
+                            "notes": {
+                                "type": "string",
+                                "description": "Примечания к заказу",
+                                "example": "Пожалуйста, звоните перед доставкой"
+                            },
+                            "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Дата создания заказа"
+                            },
+                            "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Дата последнего обновления заказа"
+                            }
+                        }
+                    },
+                    "Customer": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "Уникальный идентификатор клиента",
+                                "example": 1
+                            },
+                            "user_id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID связанного пользователя",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "description": "Имя клиента",
+                                "example": "Иван Иванов"
+                            },
+                            "email": {
+                                "type": "string",
+                                "format": "email",
+                                "description": "Электронная почта клиента",
+                                "example": "user@example.com"
+                            },
+                            "phone": {
+                                "type": "string",
+                                "description": "Телефон клиента",
+                                "example": "+7 (999) 123-45-67"
+                            },
+                            "address": {
+                                "type": "string",
+                                "description": "Адрес клиента",
+                                "example": "г. Москва, ул. Примерная, д. 1, кв. 1"
+                            },
+                            "registration_date": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Дата регистрации клиента"
+                            },
+                            "total_orders": {
+                                "type": "integer",
+                                "description": "Общее количество заказов клиента",
+                                "example": 5
+                            },
+                            "total_spent": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "Общая сумма всех заказов клиента",
+                                "example": 7500.50
+                            },
+                            "loyalty_points": {
+                                "type": "integer",
+                                "description": "Баллы лояльности клиента",
+                                "example": 150
+                            }
+                        }
+                    },
+                    "DiscountCreateRequest": {
+                        "type": "object",
+                        "required": ["code", "discount_type", "amount", "start_date", "end_date"],
+                        "properties": {
+                            "code": {
+                                "type": "string",
+                                "description": "Код скидки",
+                                "example": "SUMMER2025"
+                            },
+                            "discount_type": {
+                                "type": "string",
+                                "description": "Тип скидки",
+                                "enum": ["percentage", "fixed_amount"],
+                                "example": "percentage"
+                            },
+                            "amount": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "Размер скидки (процент или фиксированная сумма)",
+                                "example": 15
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "Описание скидки",
+                                "example": "Летняя распродажа 2025"
+                            },
+                            "start_date": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Дата начала действия скидки",
+                                "example": "2025-06-01T00:00:00Z"
+                            },
+                            "end_date": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Дата окончания действия скидки",
+                                "example": "2025-08-31T23:59:59Z"
+                            },
+                            "min_order_amount": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "Минимальная сумма заказа для применения скидки",
+                                "example": 1000
+                            },
+                            "max_discount_amount": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "Максимальная сумма скидки",
+                                "example": 500
+                            },
+                            "usage_limit": {
+                                "type": "integer",
+                                "description": "Ограничение на количество использований",
+                                "example": 100
+                            },
+                            "per_customer_limit": {
+                                "type": "integer",
+                                "description": "Ограничение на количество использований одним клиентом",
+                                "example": 1
+                            },
+                            "applies_to_categories": {
+                                "type": "array",
+                                "description": "Категории, к которым применяется скидка",
+                                "items": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                },
+                                "example": [1, 2, 3]
+                            },
+                            "applies_to_books": {
+                                "type": "array",
+                                "description": "Книги, к которым применяется скидка",
+                                "items": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                },
+                                "example": [4, 5, 6]
+                            }
+                        }
+                    },
+                    "DiscountUpdateRequest": {
+                        "type": "object",
+                        "required": ["id"],
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "ID скидки для обновления",
+                                "example": 1
+                            },
+                            "code": {
+                                "type": "string",
+                                "description": "Код скидки",
+                                "example": "FALL2025"
+                            },
+                            "discount_type": {
+                                "type": "string",
+                                "description": "Тип скидки",
+                                "enum": ["percentage", "fixed_amount"],
+                                "example": "percentage"
+                            },
+                            "amount": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "Размер скидки (процент или фиксированная сумма)",
+                                "example": 20
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "Описание скидки",
+                                "example": "Осенняя распродажа 2025"
+                            },
+                            "start_date": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Дата начала действия скидки",
+                                "example": "2025-09-01T00:00:00Z"
+                            },
+                            "end_date": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Дата окончания действия скидки",
+                                "example": "2025-11-30T23:59:59Z"
+                            },
+                            "min_order_amount": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "Минимальная сумма заказа для применения скидки",
+                                "example": 1200
+                            },
+                            "max_discount_amount": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "Максимальная сумма скидки",
+                                "example": 600
+                            },
+                            "usage_limit": {
+                                "type": "integer",
+                                "description": "Ограничение на количество использований",
+                                "example": 150
+                            },
+                            "per_customer_limit": {
+                                "type": "integer",
+                                "description": "Ограничение на количество использований одним клиентом",
+                                "example": 2
+                            },
+                            "applies_to_categories": {
+                                "type": "array",
+                                "description": "Категории, к которым применяется скидка",
+                                "items": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                },
+                                "example": [2, 3, 4]
+                            },
+                            "applies_to_books": {
+                                "type": "array",
+                                "description": "Книги, к которым применяется скидка",
+                                "items": {
+                                    "type": "integer",
+                                    "format": "int64"
+                                },
+                                "example": [7, 8, 9]
+                            },
+                            "is_active": {
+                                "type": "boolean",
+                                "description": "Активна ли скидка",
+                                "example": true
+                            }
+                        }
+                    },
+                    "Discount": {
+                        "type": "object",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "format": "int64",
+                                "description": "Уникальный идентификатор скидки",
+                                "example": 1
+                            },
+                            "code": {
+                                "type": "string",
+                                "description": "Код скидки",
+                                "example": "SUMMER2025"
+                            },
+                            "discount_type": {
+                                "type": "string",
+                                "description": "Тип скидки",
+                                "enum": ["percentage", "fixed_amount"],
+                                "example": "percentage"
+                            },
+                            "amount": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "Размер скидки (процент или фиксированная сумма)",
+                                "example": 15
+                            },
+                            "description": {
+                                "type": "string",
+                                "description": "Описание скидки",
+                                "example": "Летняя распродажа 2025"
+                            },
+                            "start_date": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Дата начала действия скидки"
+                            },
+                            "end_date": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Дата окончания действия скидки"
+                            },
+                            "min_order_amount": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "Минимальная сумма заказа для применения скидки",
+                                "example": 1000
+                            },
+                            "max_discount_amount": {
+                                "type": "number",
+                                "format": "float",
+                                "description": "Максимальная сумма скидки",
+                                "example": 500
+                            },
+                            "usage_limit": {
+                                "type": "integer",
+                                "description": "Ограничение на количество использований",
+                                "example": 100
+                            },
+                            "usage_count": {
+                                "type": "integer",
+                                "description": "Текущее количество использований",
+                                "example": 45
+                            },
+                            "per_customer_limit": {
+                                "type": "integer",
+                                "description": "Ограничение на количество использований одним клиентом",
+                                "example": 1
+                            },
+                            "applies_to_categories": {
+                                "type": "array",
+                                "description": "Категории, к которым применяется скидка",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "format": "int64"
+                                        },
+                                        "name": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "applies_to_books": {
+                                "type": "array",
+                                "description": "Книги, к которым применяется скидка",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "format": "int64"
+                                        },
+                                        "title": {
+                                            "type": "string"
+                                        }
+                                    }
+                                }
+                            },
+                            "is_active": {
+                                "type": "boolean",
+                                "description": "Активна ли скидка",
+                                "example": true
+                            },
+                            "created_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Дата создания скидки"
+                            },
+                            "updated_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "Дата последнего обновления скидки"
+                            }
+                        }
+                    },
+                    "Error": {
+                        "type": "object",
+                        "properties": {
+                            "code": {
+                                "type": "integer",
+                                "description": "Код ошибки",
+                                "example": 400
+                            },
+                            "message": {
+                                "type": "string",
+                                "description": "Описание ошибки",
+                                "example": "Некорректные данные в запросе"
+                            },
+                            "details": {
+                                "type": "object",
+                                "description": "Дополнительные детали ошибки",
+                                "example": {
+                                    "field": "email",
+                                    "error": "Неверный формат электронной почты"
+                                }
+                            }
+                        }
+                    }
+                },
+                "securitySchemes": {
+                    "bearerAuth": {
+                        "type": "http",
+                        "scheme": "bearer",
+                        "bearerFormat": "JWT",
+                        "description": "Используйте JWT токен для авторизации. Пример: 'Bearer {token}'"
+                    }
+                }
+            }
+        };
+
+        window.onload = function() {
+            const ui = SwaggerUIBundle({
+                spec: spec,
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIBundle.SwaggerUIStandalonePreset
+                ],
+                layout: "BaseLayout",
+                validatorUrl: null
+            });
+        };
+    </script>
+</body>
+</html>
