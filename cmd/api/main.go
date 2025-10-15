@@ -19,12 +19,11 @@ import (
 
 // @contact.name API Support
 // @contact.url http://www.swagger.io/support
-// @contact.email support@bookstore.com
 
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
 
-// @host your-app.onrender.com
+// @host https://https://project11a-backend-the-seal-division.onrender.com
 // @BasePath /api
 // @schemes https
 
@@ -77,7 +76,7 @@ func main() {
 	}
 
 	fmt.Printf("Server starting on port %s\n", port)
-	fmt.Printf("Swagger docs: https://your-app.onrender.com/swagger/index.html\n")
+	fmt.Printf("Swagger docs: https://https://https://project11a-backend-the-seal-division.onrender.com/swagger/index.html\n")
 	
 	if err := r.Run(":" + port); err != nil {
 		fmt.Printf("Failed to start server: %v\n", err)

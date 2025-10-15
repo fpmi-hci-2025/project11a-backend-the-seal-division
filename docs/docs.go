@@ -12,8 +12,7 @@ const docTemplate = `{
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@bookstore.com"
+            "url": "http://www.swagger.io/support"
         },
         "license": {
             "name": "MIT",
@@ -158,7 +157,7 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0.0",
-	Host:             "your-app.onrender.com",
+	Host:             "https://https://project11a-backend-the-seal-division.onrender.com",
 	BasePath:         "/api",
 	Schemes:          []string{"https"},
 	Title:            "BookStore Backend API",
