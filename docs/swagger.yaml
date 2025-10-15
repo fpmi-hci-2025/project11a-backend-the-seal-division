@@ -40,10 +40,9 @@ definitions:
         example: BookStore Backend API
         type: string
     type: object
-host: your-app.onrender.com
+host: https://https://project11a-backend-the-seal-division.onrender.com
 info:
   contact:
-    email: support@bookstore.com
     name: API Support
     url: http://www.swagger.io/support
   description: REST API для онлайн-магазина книг

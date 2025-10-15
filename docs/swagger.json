@@ -9,8 +9,7 @@
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "API Support",
-            "url": "http://www.swagger.io/support",
-            "email": "support@bookstore.com"
+            "url": "http://www.swagger.io/support"
         },
         "license": {
             "name": "MIT",
@@ -18,7 +17,7 @@
         },
         "version": "1.0.0"
     },
-    "host": "your-app.onrender.com",
+    "host": "https://https://project11a-backend-the-seal-division.onrender.com",
     "basePath": "/api",
     "paths": {
         "/api/hello": {
