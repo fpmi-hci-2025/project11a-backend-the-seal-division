@@ -63,8 +63,7 @@ jobs:
         echo "Waiting for container to start..."
         sleep 5
                 
-        docker stop test-api
-        docker rm test-api
+        docker-compose down
 
   deploy:
     name: Deploy to Render
