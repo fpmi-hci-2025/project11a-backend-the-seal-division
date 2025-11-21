@@ -42,7 +42,7 @@ jobs:
         path: |
           docs/
         retention-days: 30
-        
+
     - name: Install Docker Compose
       run: |
         sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
@@ -59,7 +59,7 @@ jobs:
 
     - name: Test Docker container
       run: |
-        run: docker-compose up
+        docker-compose up
         echo "Waiting for container to start..."
         sleep 5
                 
