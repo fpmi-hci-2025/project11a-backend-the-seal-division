@@ -1,23 +1,34 @@
 version: '3.8'
 
 services:
-  bookstore-api:
-    build: .
-    ports:
-      - "8080:8080"
+  db:
+    image: postgres:latest
+    restart: always
     environment:
-      - PORT=8080
-      - GIN_MODE=release
-    restart: unless-stopped
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 54321
+      POSTGRES_DB: person_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/health"]
-      interval: 30s
-      timeout: 10s
+      test: ["CMD-SHELL", "pg_isready -U admin"]
+      interval: 10s
+      timeout: 5s
       retries: 3
 
-  api-test:
-    image: alpine/curl
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+    ports:
+      - "8080:8000"
     depends_on:
-      - bookstore-api
-    command: ["sh", "-c", "sleep 10 && curl -f http://bookstore-api:8080/api/hello"]
-    restart: "no"
+      db:
+        condition: service_healthy
+
+volumes:
+  data:

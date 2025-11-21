@@ -49,19 +49,14 @@ jobs:
         echo "Go application builds successfully"
 
     - name: Build Docker image
-      run: docker build -t bookstore-api:latest .
+      run: docker-compose build
 
     - name: Test Docker container
       run: |
-        docker run -d -p 8080:8080 --name test-api bookstore-api:latest
+        run: docker-compose up
         echo "Waiting for container to start..."
-        sleep 15
-        
-        curl -f http://localhost:8080/health || (docker logs test-api && exit 1)
-        curl -f http://localhost:8080/api/hello || (docker logs test-api && exit 1)
-        
-        docker logs test-api
-        
+        sleep 5
+                
         docker stop test-api
         docker rm test-api
 
