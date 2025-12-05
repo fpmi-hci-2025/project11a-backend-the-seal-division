@@ -13,6 +13,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 var (
@@ -90,10 +91,8 @@ func runMigrations(sqlDB *sql.DB) error {
 		"file://./migrations",                  
 		"/opt/render/project/go/src/github.com/fpmi-hci-2025/project11a-backend-the-seal-division/migrations",       
 		"file:///opt/render/project/go/src/github.com/fpmi-hci-2025/project11a-backend-the-seal-division/migrations",
-		"file://%smigrations",
 	}
 
-	//migrationsPath := fmt.Sprintf("file://%smigrations", os.Getenv("PWD"))
 	var m *migrate.Migrate
 	var lastErr error
 
@@ -120,23 +119,74 @@ func runMigrations(sqlDB *sql.DB) error {
 	}
 	defer m.Close()
 
-	// m, err := migrate.NewWithDatabaseInstance(
-	// 	migrationsPath,
-	// 	"person_db",
-	// 	driver,
-	// )
-	// if err != nil {
-	// 	return fmt.Errorf("не удалось инициализировать мигратор: %w", err)
-	// }
+	version, dirty, err := m.Version()
+	if err != nil && err != migrate.ErrNilVersion {
+		log.Printf("Ошибка при получении версии: %v", err)
+	} else {
+		log.Printf("Текущее состояние: версия=%v, dirty=%v", version, dirty)
+	}
 
+	if dirty {
+		log.Printf("База данных в dirty состоянии (версия %d). Исправляем...", version)
+		
+		if err := m.Force(int(version)); err != nil {
+			log.Printf("Не удалось force версию %d: %v", version, err)
+			
+			if err := m.Force(0); err != nil {
+				log.Printf("Не удалось force версию 0: %v", err)
+			} else {
+				log.Println("Успешно установили версию 0")
+				version = 0
+			}
+		} else {
+			log.Printf("Успешно установили версию %d", version)
+		}
+		
+		if version > 0 {
+			log.Printf("Пробуем down миграцию с версии %d", version)
+			if err := m.Down(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+				log.Printf("Ошибка при down миграции: %v", err)
+			}
+		}
+	}
 
 	if err := m.Up(); err != nil {
-		log.Printf("Ошибка при применении миграций: %s", err)
 		if errors.Is(err, migrate.ErrNoChange) {
 			log.Println("Нет изменений для применения миграций.")
-		} else {
-			return fmt.Errorf("не удалось применить миграции: %w", err)
+			return nil
 		}
+		
+		if strings.Contains(err.Error(), "Dirty database") {
+			log.Println("Обнаружено dirty состояние после попытки миграции")
+			
+			version, dirty, verErr := m.Version()
+			if verErr != nil && verErr != migrate.ErrNilVersion {
+				log.Printf("Ошибка при получении версии: %v", verErr)
+			} else {
+				log.Printf("Текущее состояние после ошибки: версия=%v, dirty=%v", version, dirty)
+				
+				if dirty {
+					log.Printf("Пробуем force версию %d", version)
+					if forceErr := m.Force(int(version)); forceErr != nil {
+						log.Printf("Не удалось force версию %d: %v", version, forceErr)
+					} else {
+						log.Printf("Успешно установили версию %d", version)
+						return nil
+					}
+				}
+			}
+			
+			return fmt.Errorf("не удалось применить миграции из-за dirty состояния: %w", err)
+		}
+		
+		return fmt.Errorf("не удалось применить миграции: %w", err)
+	}
+
+	finalVersion, finalDirty, err := m.Version()
+	if err != nil && err != migrate.ErrNilVersion {
+		log.Printf("Ошибка при получении финальной версии: %v", err)
+	} else {
+		log.Printf("Финальное состояние: версия=%v, dirty=%v", finalVersion, finalDirty)
 	}
 
 	log.Println("Миграции успешно применены")
