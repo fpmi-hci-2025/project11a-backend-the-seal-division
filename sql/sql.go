@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/lib/pq"
 	pgmigrate "github.com/golang-migrate/migrate/v4/database/postgres"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -71,7 +72,7 @@ func ConnectDB() (*gorm.DB, error) {
 	// fmt.Println("Подключение к БД успешно установлено")
 	// return db, nil
 
-	migrationDB, err := sql.Open("bookstoredb_91of", dsn)
+	migrationDB, err := sql.Open("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка создания соединения для миграций: %w", err)
 	}
