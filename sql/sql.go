@@ -53,19 +53,37 @@ func ConnectDB() (*gorm.DB, error) {
 	// 	os.Getenv("DB_NAME"),
 	// 	os.Getenv("DB_PORT"))
 
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
+	// if err != nil {
+	// 	return nil, fmt.Errorf("ошибка подключения к БД: %w", err)
+	// }
+
+	// sqlDB, err := db.DB()
+	// if err != nil {
+	// 	return nil, fmt.Errorf("ошибка получения sql.DB: %w", err)
+	// }
+
+	// if err = runMigrations(sqlDB); err != nil {
+	// 	return nil, fmt.Errorf("ошибка миграций: %w", err)
+	// }
+
+	// fmt.Println("Подключение к БД успешно установлено")
+	// return db, nil
+
+	migrationDB, err := sql.Open("bookstoredb_91of", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка создания соединения для миграций: %w", err)
+	}
+	defer migrationDB.Close()
+
+	if err = runMigrations(migrationDB); err != nil {
+		log.Printf("Warning: migrations failed: %v", err)
+	}
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, fmt.Errorf("ошибка подключения к БД: %w", err)
-	}
-
-	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, fmt.Errorf("ошибка получения sql.DB: %w", err)
-	}
-
-	if err = runMigrations(sqlDB); err != nil {
-		return nil, fmt.Errorf("ошибка миграций: %w", err)
 	}
 
 	fmt.Println("Подключение к БД успешно установлено")
@@ -87,9 +105,9 @@ func runMigrations(sqlDB *sql.DB) error {
 	}
 
 	migrationPaths := []string{
-		"file://migrations",                    
-		"file://./migrations",                  
-		"/opt/render/project/go/src/github.com/fpmi-hci-2025/project11a-backend-the-seal-division/migrations",       
+		"file://migrations",
+		"file://./migrations",
+		"/opt/render/project/go/src/github.com/fpmi-hci-2025/project11a-backend-the-seal-division/migrations",
 		"file:///opt/render/project/go/src/github.com/fpmi-hci-2025/project11a-backend-the-seal-division/migrations",
 	}
 
