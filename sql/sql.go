@@ -90,7 +90,7 @@ func runMigrations(sqlDB *sql.DB) error {
 		"file://./migrations",                  
 		"/opt/render/project/go/src/github.com/fpmi-hci-2025/project11a-backend-the-seal-division/migrations",       
 		"file:///opt/render/project/go/src/github.com/fpmi-hci-2025/project11a-backend-the-seal-division/migrations",
-		"file://%smigrations"
+		"file://%smigrations",
 	}
 
 	//migrationsPath := fmt.Sprintf("file://%smigrations", os.Getenv("PWD"))
