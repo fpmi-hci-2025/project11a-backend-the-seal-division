@@ -27,13 +27,30 @@ var (
 
 func ConnectDB() (*gorm.DB, error) {
 	var err error
+	var dsn string
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_PORT"))
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL != "" {
+		dsn = databaseURL
+	} else {
+		host := getEnvOrDefault("DB_HOST", "localhost")
+		port := getEnvOrDefault("DB_PORT", "5432")
+		user := getEnvOrDefault("DB_USER", "admin")
+		password := getEnvOrDefault("DB_PASSWORD", "54321")
+		dbname := getEnvOrDefault("DB_NAME", "person_db")
+		sslmode := getEnvOrDefault("DB_SSLMODE", "disable")
+		dsn = fmt.Sprintf(
+			"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+			host, port, user, password, dbname, sslmode,
+		)
+	}
+
+	// dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+	// 	os.Getenv("DB_HOST"),
+	// 	os.Getenv("DB_USER"),
+	// 	os.Getenv("DB_PASSWORD"),
+	// 	os.Getenv("DB_NAME"),
+	// 	os.Getenv("DB_PORT"))
 
 	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
 
