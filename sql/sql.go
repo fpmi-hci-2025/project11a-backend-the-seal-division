@@ -101,7 +101,8 @@ func runMigrations(sqlDB *sql.DB) error {
 		
 		m, err = migrate.NewWithDatabaseInstance(
 			path,
-			"person_db",
+			"bookstoredb_91of",
+			//"person_db",
 			driver,
 		)
 		
