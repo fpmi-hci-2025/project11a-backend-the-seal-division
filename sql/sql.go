@@ -85,15 +85,50 @@ func runMigrations(sqlDB *sql.DB) error {
 		return fmt.Errorf("не удалось создать драйвер миграций: %w", err)
 	}
 
-	migrationsPath := fmt.Sprintf("file://%smigrations", os.Getenv("PWD"))
-	m, err := migrate.NewWithDatabaseInstance(
-		migrationsPath,
-		"person_db",
-		driver,
-	)
-	if err != nil {
-		return fmt.Errorf("не удалось инициализировать мигратор: %w", err)
+	migrationPaths := []string{
+		"file://migrations",                    
+		"file://./migrations",                  
+		"/opt/render/project/go/src/github.com/fpmi-hci-2025/project11a-backend-the-seal-division/migrations",       
+		"file:///opt/render/project/go/src/github.com/fpmi-hci-2025/project11a-backend-the-seal-division/migrations",
+		"file://%smigrations",
 	}
+
+	//migrationsPath := fmt.Sprintf("file://%smigrations", os.Getenv("PWD"))
+	var m *migrate.Migrate
+	var lastErr error
+
+	for _, path := range migrationPaths {
+		log.Printf("Пробуем путь к миграциям: %s", path)
+		
+		m, err = migrate.NewWithDatabaseInstance(
+			path,
+			"person_db",
+			driver,
+		)
+		
+		if err == nil {
+			log.Printf("Успешно инициализировали миграции с путем: %s", path)
+			break
+		}
+		
+		lastErr = err
+		log.Printf("Не удалось с путем %s: %v", path, err)
+	}
+
+	if m == nil {
+		return fmt.Errorf("не удалось найти миграции ни по одному из путей. Последняя ошибка: %w", lastErr)
+	}
+	defer m.Close()
+
+	// m, err := migrate.NewWithDatabaseInstance(
+	// 	migrationsPath,
+	// 	"person_db",
+	// 	driver,
+	// )
+	// if err != nil {
+	// 	return fmt.Errorf("не удалось инициализировать мигратор: %w", err)
+	// }
+
 
 	if err := m.Up(); err != nil {
 		log.Printf("Ошибка при применении миграций: %s", err)
