@@ -71,6 +71,14 @@ func ConnectDB() (*gorm.DB, error) {
 	return db, nil
 }
 
+func getEnvOrDefault(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
+
 func runMigrations(sqlDB *sql.DB) error {
 	driver, err := pgmigrate.WithInstance(sqlDB, &pgmigrate.Config{})
 	if err != nil {
