@@ -8,7 +8,8 @@ type User struct {
 	Phone     string `json:"phone"`
 	Address   string `json:"address"`
 	Role      string `json:"role"`
-	RegDate   string `json:"reg_date"`
+	// RegDate   string `json:"reg_date"`
+	RegDate  time.Time `gorm:"type:timestamp;default:CURRENT_TIMESTAMP;column:reg_date" json:"reg_date,omitempty"`
 }
 
 type Orders struct {

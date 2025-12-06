@@ -563,9 +563,6 @@ func SaveUser(db *gorm.DB, user *entities.User) error {
 	if user == nil {
 		return errors.New("user is nil")
 	}
-	if user.RegDate == "" {
-        user.RegDate = time.Now()
-    }
 	if err := db.Create(user).Error; err != nil {
 		log.Printf("Ошибка при сохранении пользователя: %v", err)
 		return err
