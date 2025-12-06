@@ -181,6 +181,13 @@ func main() {
 		&entities.Book{},
 		&entities.Discount{},
 	)
+	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(map[string]string{
+			"status": "OK",
+			"service": "bookstore-api",
+		})
+	})
 	http.HandleFunc("/books", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			sql.AddBook(w, r)
