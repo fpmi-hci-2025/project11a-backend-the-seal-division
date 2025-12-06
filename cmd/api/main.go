@@ -4,6 +4,7 @@ import (
 	_ "bookstore-backend/docs"
 	"bookstore-backend/entities"
 	"bookstore-backend/sql"
+	"encoding/json"
 	"fmt"
 	_ "github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
