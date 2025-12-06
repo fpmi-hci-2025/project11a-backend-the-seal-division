@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 var (
@@ -562,7 +563,7 @@ func SaveUser(db *gorm.DB, user *entities.User) error {
 	if user == nil {
 		return errors.New("user is nil")
 	}
-	if user.RegDate.IsZero() {
+	if user.RegDate == "" {
         user.RegDate = time.Now()
     }
 	if err := db.Create(user).Error; err != nil {
