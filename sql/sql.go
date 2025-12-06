@@ -15,6 +15,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 )
 
 var (
@@ -467,10 +468,10 @@ func SavePublisher(db *gorm.DB, pub *entities.Publisher) error {
 		return errors.New("db is nil")
 	}
 	if pub == nil {
-		return errors.New("book is nil")
+		return errors.New("publisher is nil")
 	}
 	if err := db.Create(pub).Error; err != nil {
-		log.Printf("Ошибка при сохранении книги: %v", err)
+		log.Printf("Ошибка при сохранении издательства: %v", err)
 		return err
 	}
 	return nil
@@ -502,10 +503,10 @@ func SaveDiscount(db *gorm.DB, disc *entities.Discount) error {
 		return errors.New("db is nil")
 	}
 	if disc == nil {
-		return errors.New("book is nil")
+		return errors.New("discount is nil")
 	}
 	if err := db.Create(disc).Error; err != nil {
-		log.Printf("Ошибка при сохранении книги: %v", err)
+		log.Printf("Ошибка при сохранении акции: %v", err)
 		return err
 	}
 	return nil
@@ -560,10 +561,13 @@ func SaveUser(db *gorm.DB, user *entities.User) error {
 		return errors.New("db is nil")
 	}
 	if user == nil {
-		return errors.New("book is nil")
+		return errors.New("user is nil")
 	}
+	if user.RegDate == "" {
+        user.RegDate = time.Now().String()
+    }
 	if err := db.Create(user).Error; err != nil {
-		log.Printf("Ошибка при сохранении книги: %v", err)
+		log.Printf("Ошибка при сохранении пользователя: %v", err)
 		return err
 	}
 	return nil
@@ -634,10 +638,10 @@ func SaveOrder(db *gorm.DB, order *entities.Orders) error {
 		return errors.New("db is nil")
 	}
 	if order == nil {
-		return errors.New("book is nil")
+		return errors.New("order is nil")
 	}
 	if err := db.Create(order).Error; err != nil {
-		log.Printf("Ошибка при сохранении книги: %v", err)
+		log.Printf("Ошибка при сохранении заказа: %v", err)
 		return err
 	}
 	return nil
@@ -731,10 +735,10 @@ func SaveReview(db *gorm.DB, rev *entities.Review) error {
 		return errors.New("db is nil")
 	}
 	if rev == nil {
-		return errors.New("book is nil")
+		return errors.New("review is nil")
 	}
 	if err := db.Create(rev).Error; err != nil {
-		log.Printf("Ошибка при сохранении книги: %v", err)
+		log.Printf("Ошибка при сохранении отзыва: %v", err)
 		return err
 	}
 	return nil
