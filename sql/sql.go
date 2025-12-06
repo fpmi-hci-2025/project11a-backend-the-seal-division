@@ -325,7 +325,7 @@ func GetBookAuthors(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	returnJSON(w, authors) // Поменяйте 'author' на 'authors', если возвращаете список
+	returnJSON(w, authors)
 }
 func GetBookPublishers(w http.ResponseWriter, r *http.Request) {
 	id := r.URL.Path[len("/books/publishers/"):]
