@@ -84,6 +84,8 @@ func ConnectDB() (*gorm.DB, error) {
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		DisableForeignKeyConstraintWhenMigrating: true,
+		SkipDefaultTransaction:                   true,
+		PrepareStmt:                              false,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("ошибка подключения к БД: %w", err)
