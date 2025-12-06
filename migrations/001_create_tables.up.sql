@@ -10,15 +10,16 @@ CREATE TABLE users (
 );
 
 CREATE TABLE publishers (
-                            publisher_id SERIAL PRIMARY KEY,
+                            id SERIAL PRIMARY KEY,
                             name VARCHAR(255) NOT NULL,
                             email VARCHAR(255) NOT NULL UNIQUE,
                             phone VARCHAR(50)
+);
 
 CREATE TABLE books (
                        id SERIAL PRIMARY KEY,
                        isbn VARCHAR(20) NOT NULL UNIQUE,
-                       publisher_id INTEGER REFERENCES publishers(publisher_id) ON DELETE SET NULL,
+                       publisher_id INTEGER REFERENCES publishers(id) ON DELETE SET NULL,
                        title VARCHAR(255) NOT NULL,
                        author_id VARCHAR(255),
                        description TEXT,
@@ -27,8 +28,10 @@ CREATE TABLE books (
                        category_id VARCHAR(255),
                        category VARCHAR(255),
                        author VARCHAR(255),
-                        link VARCHAR(255)
+                       link VARCHAR(255),
+                       CONSTRAINT fk_publisher FOREIGN KEY (publisher_id) REFERENCES publishers(id) ON DELETE SET NULL
 );
+
 
 CREATE TABLE orders (
                         id SERIAL PRIMARY KEY,
@@ -44,7 +47,7 @@ CREATE TABLE reviews (
                          comment TEXT
 );
 CREATE TABLE discounts (
-                           discount_id VARCHAR(255) PRIMARY KEY,
+                           id VARCHAR(255) PRIMARY KEY,
                            title VARCHAR(255) NOT NULL,
                            description TEXT,
                            percentage DECIMAL(5, 2) NOT NULL

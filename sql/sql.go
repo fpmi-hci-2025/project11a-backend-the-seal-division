@@ -224,7 +224,7 @@ func returnJSON(w http.ResponseWriter, data interface{}) {
 }
 func ReceiveBookCategory(db *gorm.DB, id string) (string, error) {
 
-	if err := db.Preload("Category").First(&book, id).Error; err != nil {
+	if err := db.First(&book, id).Error; err != nil {
 		return "", err
 	}
 
@@ -232,7 +232,7 @@ func ReceiveBookCategory(db *gorm.DB, id string) (string, error) {
 }
 func ReceiveBookAuthors(db *gorm.DB, id string) (string, error) {
 
-	if err := db.Preload("Author").First(&book, id).Error; err != nil {
+	if err := db.First(&book, id).Error; err != nil {
 		return "", err
 	}
 
@@ -240,7 +240,7 @@ func ReceiveBookAuthors(db *gorm.DB, id string) (string, error) {
 }
 func ReceiveBookPublishers(db *gorm.DB, id string) (string, error) {
 
-	if err := db.Preload("Publisher").First(&book, id).Error; err != nil {
+	if err := db.First(&book, id).Error; err != nil {
 		return "", err
 	}
 
@@ -260,7 +260,7 @@ func SaveBook(db *gorm.DB, book *entities.Book) error {
 	return nil
 }
 func ReceiveBook(db *gorm.DB, id string) (entities.Book, error) {
-	if err := db.Where("id = ?", id).First(&book).Error; err != nil {
+	if err := db.Preload("Publisher").First(&book, "id = ?", id).Error; err != nil {
 		return entities.Book{}, err
 	}
 	return book, nil

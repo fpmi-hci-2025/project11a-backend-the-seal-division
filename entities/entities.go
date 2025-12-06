@@ -11,13 +11,6 @@ type User struct {
 	RegDate   string `json:"reg_date"`
 }
 
-type Publisher struct {
-	PublisherID string `json:"publisher_id" gorm:"column:publisher_id;primaryKey"`
-	Name        string `json:"name"`
-	Email       string `json:"email"`
-	Phone       string `json:"phone"`
-}
-
 type Orders struct {
 	ID          string `json:"id" gorm:"column:id;primaryKey"`
 	Description string `json:"description"`
@@ -33,11 +26,19 @@ type Review struct {
 }
 
 type Discount struct {
-	DiscountID  string  `json:"discount_id" gorm:"column:discount_id;primaryKey"`
+	ID          string  `json:"id" gorm:"column:id;primaryKey"`
 	Title       string  `json:"title"`
 	Description string  `json:"description"`
 	Percentage  float64 `json:"percentage"`
 }
+
+type Publisher struct {
+	ID    string `json:"id" gorm:"primaryKey"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
+	Phone string `json:"phone"`
+}
+
 type Book struct {
 	ID          string    `json:"id" gorm:"column:id;primaryKey"`
 	ISBN        string    `json:"isbn"`
@@ -48,8 +49,8 @@ type Book struct {
 	Price       string    `json:"price"`
 	Language    string    `json:"language"`
 	CategoryID  string    `json:"category_id"`
-	Category    string    `gorm:"category"`
-	Author      string    `gorm:"author"`
-	Link        string    `gorm:"link"`
-	Publisher   Publisher `gorm:"foreignKey:PublisherID"`
+	Category    string    `json:"category"`
+	Author      string    `json:"author"`
+	Link        string    `json:"link"`
+	Publisher   Publisher `json:"publisher" gorm:"foreignKey:PublisherID"`
 }
