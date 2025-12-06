@@ -7,12 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/lib/pq"
 	pgmigrate "github.com/golang-migrate/migrate/v4/database/postgres"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 )
 
 var (
@@ -27,31 +29,76 @@ var (
 
 func ConnectDB() (*gorm.DB, error) {
 	var err error
+	var dsn string
 
-	dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-		os.Getenv("DB_HOST"),
-		os.Getenv("DB_USER"),
-		os.Getenv("DB_PASSWORD"),
-		os.Getenv("DB_NAME"),
-		os.Getenv("DB_PORT"))
+	databaseURL := os.Getenv("DATABASE_URL")
+	if databaseURL != "" {
+		dsn = databaseURL
+	} else {
+		host := getEnvOrDefault("DB_HOST", "localhost")
+		port := getEnvOrDefault("DB_PORT", "5432")
+		user := getEnvOrDefault("DB_USER", "admin")
+		password := getEnvOrDefault("DB_PASSWORD", "54321")
+		dbname := getEnvOrDefault("DB_NAME", "person_db")
+		sslmode := getEnvOrDefault("DB_SSLMODE", "disable")
+		dsn = fmt.Sprintf(
+			"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+			host, port, user, password, dbname, sslmode,
+		)
+	}
 
-	db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	// dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
+	// 	os.Getenv("DB_HOST"),
+	// 	os.Getenv("DB_USER"),
+	// 	os.Getenv("DB_PASSWORD"),
+	// 	os.Getenv("DB_NAME"),
+	// 	os.Getenv("DB_PORT"))
 
+	// db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
+
+	// if err != nil {
+	// 	return nil, fmt.Errorf("ошибка подключения к БД: %w", err)
+	// }
+
+	// sqlDB, err := db.DB()
+	// if err != nil {
+	// 	return nil, fmt.Errorf("ошибка получения sql.DB: %w", err)
+	// }
+
+	// if err = runMigrations(sqlDB); err != nil {
+	// 	return nil, fmt.Errorf("ошибка миграций: %w", err)
+	// }
+
+	// fmt.Println("Подключение к БД успешно установлено")
+	// return db, nil
+
+	migrationDB, err := sql.Open("postgres", dsn)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка создания соединения для миграций: %w", err)
+	}
+	defer migrationDB.Close()
+
+	if err = runMigrations(migrationDB); err != nil {
+		log.Printf("Warning: migrations failed: %v", err)
+	}
+
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true,
+	})
 	if err != nil {
 		return nil, fmt.Errorf("ошибка подключения к БД: %w", err)
 	}
 
-	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, fmt.Errorf("ошибка получения sql.DB: %w", err)
-	}
-
-	if err = runMigrations(sqlDB); err != nil {
-		return nil, fmt.Errorf("ошибка миграций: %w", err)
-	}
-
 	fmt.Println("Подключение к БД успешно установлено")
 	return db, nil
+}
+
+func getEnvOrDefault(key, defaultValue string) string {
+	value := os.Getenv(key)
+	if value == "" {
+		return defaultValue
+	}
+	return value
 }
 
 func runMigrations(sqlDB *sql.DB) error {
@@ -60,23 +107,108 @@ func runMigrations(sqlDB *sql.DB) error {
 		return fmt.Errorf("не удалось создать драйвер миграций: %w", err)
 	}
 
-	migrationsPath := fmt.Sprintf("file://%smigrations", os.Getenv("PWD"))
-	m, err := migrate.NewWithDatabaseInstance(
-		migrationsPath,
-		"person_db",
-		driver,
-	)
-	if err != nil {
-		return fmt.Errorf("не удалось инициализировать мигратор: %w", err)
+	migrationPaths := []string{
+		"file://migrations",
+		"file://./migrations",
+		"/opt/render/project/go/src/github.com/fpmi-hci-2025/project11a-backend-the-seal-division/migrations",
+		"file:///opt/render/project/go/src/github.com/fpmi-hci-2025/project11a-backend-the-seal-division/migrations",
+	}
+
+	var m *migrate.Migrate
+	var lastErr error
+
+	for _, path := range migrationPaths {
+		log.Printf("Пробуем путь к миграциям: %s", path)
+		
+		m, err = migrate.NewWithDatabaseInstance(
+			path,
+			"bookstoredb_91of",
+			//"person_db",
+			driver,
+		)
+		
+		if err == nil {
+			log.Printf("Успешно инициализировали миграции с путем: %s", path)
+			break
+		}
+		
+		lastErr = err
+		log.Printf("Не удалось с путем %s: %v", path, err)
+	}
+
+	if m == nil {
+		return fmt.Errorf("не удалось найти миграции ни по одному из путей. Последняя ошибка: %w", lastErr)
+	}
+	defer m.Close()
+
+	version, dirty, err := m.Version()
+	if err != nil && err != migrate.ErrNilVersion {
+		log.Printf("Ошибка при получении версии: %v", err)
+	} else {
+		log.Printf("Текущее состояние: версия=%v, dirty=%v", version, dirty)
+	}
+
+	if dirty {
+		log.Printf("База данных в dirty состоянии (версия %d). Исправляем...", version)
+		
+		if err := m.Force(int(version)); err != nil {
+			log.Printf("Не удалось force версию %d: %v", version, err)
+			
+			if err := m.Force(0); err != nil {
+				log.Printf("Не удалось force версию 0: %v", err)
+			} else {
+				log.Println("Успешно установили версию 0")
+				version = 0
+			}
+		} else {
+			log.Printf("Успешно установили версию %d", version)
+		}
+		
+		if version > 0 {
+			log.Printf("Пробуем down миграцию с версии %d", version)
+			if err := m.Down(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
+				log.Printf("Ошибка при down миграции: %v", err)
+			}
+		}
 	}
 
 	if err := m.Up(); err != nil {
-		log.Printf("Ошибка при применении миграций: %s", err)
 		if errors.Is(err, migrate.ErrNoChange) {
 			log.Println("Нет изменений для применения миграций.")
-		} else {
-			return fmt.Errorf("не удалось применить миграции: %w", err)
+			return nil
 		}
+		
+		if strings.Contains(err.Error(), "Dirty database") {
+			log.Println("Обнаружено dirty состояние после попытки миграции")
+			
+			version, dirty, verErr := m.Version()
+			if verErr != nil && verErr != migrate.ErrNilVersion {
+				log.Printf("Ошибка при получении версии: %v", verErr)
+			} else {
+				log.Printf("Текущее состояние после ошибки: версия=%v, dirty=%v", version, dirty)
+				
+				if dirty {
+					log.Printf("Пробуем force версию %d", version)
+					if forceErr := m.Force(int(version)); forceErr != nil {
+						log.Printf("Не удалось force версию %d: %v", version, forceErr)
+					} else {
+						log.Printf("Успешно установили версию %d", version)
+						return nil
+					}
+				}
+			}
+			
+			return fmt.Errorf("не удалось применить миграции из-за dirty состояния: %w", err)
+		}
+		
+		return fmt.Errorf("не удалось применить миграции: %w", err)
+	}
+
+	finalVersion, finalDirty, err := m.Version()
+	if err != nil && err != migrate.ErrNilVersion {
+		log.Printf("Ошибка при получении финальной версии: %v", err)
+	} else {
+		log.Printf("Финальное состояние: версия=%v, dirty=%v", finalVersion, finalDirty)
 	}
 
 	log.Println("Миграции успешно применены")
