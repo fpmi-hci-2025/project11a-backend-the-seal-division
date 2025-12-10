@@ -12,7 +12,8 @@ const docTemplate = `{
         "termsOfService": "http://swagger.io/terms/",
         "contact": {
             "name": "API Support",
-            "url": "http://www.swagger.io/support"
+            "url": "http://www.swagger.io/support",
+            "email": "[email protected]"
         },
         "license": {
             "name": "MIT",
@@ -22,144 +23,15 @@ const docTemplate = `{
     },
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
-    "paths": {
-        "/api/hello": {
-            "get": {
-                "description": "Возвращает приветственное сообщение",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "test"
-                ],
-                "summary": "Hello endpoint",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/main.HelloResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/info": {
-            "get": {
-                "description": "Возвращает информацию об API",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "info"
-                ],
-                "summary": "API information",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/main.InfoResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/health": {
-            "get": {
-                "description": "Проверка здоровья сервера",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "health"
-                ],
-                "summary": "Health check",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/main.HealthResponse"
-                        }
-                    }
-                }
-            }
-        }
-    },
-    "definitions": {
-        "main.HealthResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "example": "Server is running"
-                },
-                "status": {
-                    "type": "string",
-                    "example": "OK"
-                },
-                "timestamp": {
-                    "type": "string",
-                    "example": "2025-01-01T00:00:00Z"
-                },
-                "version": {
-                    "type": "string",
-                    "example": "1.0.0"
-                }
-            }
-        },
-        "main.HelloResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "example": "Hello from BookStore API!"
-                },
-                "service": {
-                    "type": "string",
-                    "example": "bookstore-backend"
-                },
-                "version": {
-                    "type": "string",
-                    "example": "1.0.0"
-                }
-            }
-        },
-        "main.InfoResponse": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string",
-                    "example": "REST API for online bookstore"
-                },
-                "endpoints": {
-                    "type": "array",
-                    "items": {
-                        "type": "string"
-                    }
-                },
-                "name": {
-                    "type": "string",
-                    "example": "BookStore Backend API"
-                }
-            }
-        }
-    }
+    "paths": {}
 }`
 
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0.0",
-	Host:             "https://https://project11a-backend-the-seal-division.onrender.com",
-	BasePath:         "/api",
-	Schemes:          []string{"https"},
+	Host:             "localhost:8000",
+	BasePath:         "/",
+	Schemes:          []string{"http", "https"},
 	Title:            "BookStore Backend API",
 	Description:      "REST API для онлайн-магазина книг",
 	InfoInstanceName: "swagger",

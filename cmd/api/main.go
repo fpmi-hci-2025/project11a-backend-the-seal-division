@@ -6,14 +6,14 @@ import (
 	"bookstore-backend/sql"
 	"encoding/json"
 	"fmt"
+	"net/http"
+
 	_ "github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	httpSwagger "github.com/swaggo/http-swagger"
 	_ "golang.org/x/crypto/bcrypt"
 	_ "gorm.io/driver/postgres"
-	"net/http"
-	_ "strings"
-	_ "time"
 )
 
 // @title BookStore Backend API
@@ -23,157 +23,23 @@ import (
 
 // @contact.name API Support
 // @contact.url http://www.swagger.io/support
+// @contact.email [email protected]
 
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
 
-// @host https://https://project11a-backend-the-seal-division.onrender.com
-// @BasePath /api
-// @schemes https
-
-/*
-	func main() {
-		port := os.Getenv("PORT")
-		if port == "" {
-			port = "8080"
-		}
-
-		if os.Getenv("GIN_MODE") == "release" {
-			gin.SetMode(gin.ReleaseMode)
-		}
-
-		r := gin.Default()
-
-		r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
-
-		// HealthCheck
-		// @Summary Health check
-		// @Description Проверка здоровья сервера
-		// @Tags health
-		// @Accept json
-		// @Produce json
-		// @Success 200 {object} HealthResponse
-		// @Router /health [get]
-		r.GET("/health", healthCheck)
-
-		// API routes
-		api := r.Group("/api")
-		{
-			// Hello
-			// @Summary Hello endpoint
-			// @Description Возвращает приветственное сообщение
-			// @Tags test
-			// @Accept json
-			// @Produce json
-			// @Success 200 {object} HelloResponse
-			// @Router /hello [get]
-			api.GET("/hello", helloHandler)
-
-			// Info
-			// @Summary API information
-			// @Description Возвращает информацию об API
-			// @Tags info
-			// @Accept json
-			// @Produce json
-			// @Success 200 {object} InfoResponse
-			// @Router /info [get]
-			api.GET("/info", infoHandler)
-		}
-
-		fmt.Printf("Server starting on port %s\n", port)
-		fmt.Printf("Swagger docs: https://https://https://project11a-backend-the-seal-division.onrender.com/swagger/index.html\n")
-
-		if err := r.Run(":" + port); err != nil {
-			fmt.Printf("Failed to start server: %v\n", err)
-			os.Exit(1)
-		}
-	}
-
-// HealthResponse represents health check response
-
-	type HealthResponse struct {
-		Status    string `json:"status" example:"OK"`
-		Message   string `json:"message" example:"Server is running"`
-		Version   string `json:"version" example:"1.0.0"`
-		Timestamp string `json:"timestamp" example:"2025-01-01T00:00:00Z"`
-	}
-
-// @Summary Health check
-// @Description Проверка здоровья сервера
-// @Tags health
-// @Accept json
-// @Produce json
-// @Success 200 {object} HealthResponse
-// @Router /health [get]
-
-	func healthCheck(c *gin.Context) {
-		c.JSON(http.StatusOK, HealthResponse{
-			Status:    "OK",
-			Message:   "BookStore API is running",
-			Version:   "1.0.0",
-			Timestamp: time.Now().Format(time.RFC3339),
-		})
-	}
-
-// HelloResponse represents hello endpoint response
-
-	type HelloResponse struct {
-		Message string `json:"message" example:"Hello from BookStore API!"`
-		Service string `json:"service" example:"bookstore-backend"`
-		Version string `json:"version" example:"1.0.0"`
-	}
-
-// @Summary Hello endpoint
-// @Description Возвращает приветственное сообщение
-// @Tags test
-// @Accept json
-// @Produce json
-// @Success 200 {object} HelloResponse
-// @Router /api/hello [get]
-
-	func helloHandler(c *gin.Context) {
-		c.JSON(http.StatusOK, HelloResponse{
-			Message: "Hello from BookStore API!",
-			Service: "bookstore-backend",
-			Version: "1.0.0",
-		})
-	}
-
-// InfoResponse represents API info response
-
-	type InfoResponse struct {
-		Name        string   `json:"name" example:"BookStore Backend API"`
-		Description string   `json:"description" example:"REST API for online bookstore"`
-		Endpoints   []string `json:"endpoints"`
-	}
-
-// @Summary API information
-// @Description Возвращает информацию об API
-// @Tags info
-// @Accept json
-// @Produce json
-// @Success 200 {object} InfoResponse
-// @Router /api/info [get]
-
-	func infoHandler(c *gin.Context) {
-		c.JSON(http.StatusOK, InfoResponse{
-			Name:        "BookStore Backend API",
-			Description: "REST API for online bookstore",
-			Endpoints: []string{
-				"GET  /health",
-				"GET  /api/hello",
-				"GET  /api/info",
-				"GET  /swagger/index.html",
-			},
-		})
-	}
-*/
+// @host localhost:8000
+// @BasePath /
+// @schemes http https
 
 func main() {
 	db, err := sql.ConnectDB()
 	if err != nil {
-		fmt.Printf("Ошибка: %v", err)
+		fmt.Printf("Ошибка подключения к БД: %v\n", err)
+		return
 	}
+
+	// Автомиграция
 	db.AutoMigrate(
 		&entities.User{},
 		&entities.Publisher{},
@@ -182,13 +48,37 @@ func main() {
 		&entities.Book{},
 		&entities.Discount{},
 	)
+
+	// Swagger документация
+	http.HandleFunc("/swagger/", httpSwagger.Handler(
+		httpSwagger.URL("http://localhost:8000/swagger/doc.json"),
+	))
+
+	// @Summary Health check
+	// @Description Проверка работоспособности API
+	// @Tags health
+	// @Accept json
+	// @Produce json
+	// @Success 200 {object} map[string]string
+	// @Router /health [get]
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		json.NewEncoder(w).Encode(map[string]string{
-			"status": "OK",
+			"status":  "OK",
 			"service": "bookstore-api",
 		})
 	})
+
+	// Books endpoints
+	// @Summary Добавить книгу
+	// @Description Создание новой книги в базе данных
+	// @Tags books
+	// @Accept json
+	// @Produce json
+	// @Param book body entities.Book true "Данные книги"
+	// @Success 201 {object} entities.Book
+	// @Failure 400 {object} map[string]string
+	// @Router /books [post]
 	http.HandleFunc("/books", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			sql.AddBook(w, r)
@@ -196,6 +86,18 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
+	// @Summary Операции с книгой
+	// @Description Получение, обновление или удаление книги по ID
+	// @Tags books
+	// @Accept json
+	// @Produce json
+	// @Param id path int true "ID книги"
+	// @Success 200 {object} entities.Book
+	// @Failure 404 {object} map[string]string
+	// @Router /books/{id} [get]
+	// @Router /books/{id} [put]
+	// @Router /books/{id} [delete]
 	http.HandleFunc("/books/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodDelete:
@@ -208,6 +110,15 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
+	// @Summary Получить книги по категории
+	// @Description Получение списка книг определенной категории
+	// @Tags books
+	// @Accept json
+	// @Produce json
+	// @Param category path string true "Категория книг"
+	// @Success 200 {array} entities.Book
+	// @Router /books/categories/{category} [get]
 	http.HandleFunc("/books/categories/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			sql.GetBookCategory(w, r)
@@ -215,6 +126,15 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
+	// @Summary Получить книги по издателю
+	// @Description Получение списка книг определенного издателя
+	// @Tags books
+	// @Accept json
+	// @Produce json
+	// @Param publisher path string true "Издатель"
+	// @Success 200 {array} entities.Book
+	// @Router /books/publishers/{publisher} [get]
 	http.HandleFunc("/books/publishers/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			sql.GetBookPublishers(w, r)
@@ -222,6 +142,15 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
+	// @Summary Получить книги по автору
+	// @Description Получение списка книг определенного автора
+	// @Tags books
+	// @Accept json
+	// @Produce json
+	// @Param author path string true "Автор"
+	// @Success 200 {array} entities.Book
+	// @Router /books/authors/{author} [get]
 	http.HandleFunc("/books/authors/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			sql.GetBookAuthors(w, r)
@@ -229,6 +158,16 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
+	// Publishers endpoints
+	// @Summary Добавить издателя
+	// @Description Создание нового издателя
+	// @Tags publishers
+	// @Accept json
+	// @Produce json
+	// @Param publisher body entities.Publisher true "Данные издателя"
+	// @Success 201 {object} entities.Publisher
+	// @Router /publishers [post]
 	http.HandleFunc("/publishers", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			sql.AddPublisher(w, r)
@@ -236,6 +175,15 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
+	// @Summary Получить издателя
+	// @Description Получение информации об издателе по ID
+	// @Tags publishers
+	// @Accept json
+	// @Produce json
+	// @Param id path int true "ID издателя"
+	// @Success 200 {object} entities.Publisher
+	// @Router /publishers/{id} [get]
 	http.HandleFunc("/publishers/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			sql.GetPublisher(w, r)
@@ -243,6 +191,16 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
+	// Discounts endpoints
+	// @Summary Добавить скидку
+	// @Description Создание новой скидки
+	// @Tags discounts
+	// @Accept json
+	// @Produce json
+	// @Param discount body entities.Discount true "Данные скидки"
+	// @Success 201 {object} entities.Discount
+	// @Router /discounts [post]
 	http.HandleFunc("/discounts", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			sql.AddDiscount(w, r)
@@ -250,6 +208,16 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
+	// @Summary Обновить скидку
+	// @Description Обновление информации о скидке
+	// @Tags discounts
+	// @Accept json
+	// @Produce json
+	// @Param id path int true "ID скидки"
+	// @Param discount body entities.Discount true "Новые данные скидки"
+	// @Success 200 {object} entities.Discount
+	// @Router /discounts/{id} [patch]
 	http.HandleFunc("/discounts/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPatch {
 			sql.UpdateDiscounts(w, r)
@@ -257,6 +225,16 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
+	// Users endpoints
+	// @Summary Добавить пользователя
+	// @Description Регистрация нового пользователя
+	// @Tags users
+	// @Accept json
+	// @Produce json
+	// @Param user body entities.User true "Данные пользователя"
+	// @Success 201 {object} entities.User
+	// @Router /users [post]
 	http.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			sql.AddUser(w, r)
@@ -264,6 +242,16 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
+	// Orders endpoints
+	// @Summary Создать заказ
+	// @Description Создание нового заказа
+	// @Tags orders
+	// @Accept json
+	// @Produce json
+	// @Param order body entities.Orders true "Данные заказа"
+	// @Success 201 {object} entities.Orders
+	// @Router /orders [post]
 	http.HandleFunc("/orders", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			sql.AddOrder(w, r)
@@ -271,6 +259,16 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
+
+	// @Summary Операции с заказом
+	// @Description Получение или удаление заказа по ID
+	// @Tags orders
+	// @Accept json
+	// @Produce json
+	// @Param id path int true "ID заказа"
+	// @Success 200 {object} entities.Orders
+	// @Router /orders/{id} [get]
+	// @Router /orders/{id} [delete]
 	http.HandleFunc("/orders/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
@@ -281,7 +279,21 @@ func main() {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
-	http.HandleFunc("books/reviews/", func(w http.ResponseWriter, r *http.Request) {
+
+	// Reviews endpoints
+	// @Summary Операции с отзывами
+	// @Description Создание, получение, обновление или удаление отзыва
+	// @Tags reviews
+	// @Accept json
+	// @Produce json
+	// @Param id path int true "ID отзыва"
+	// @Param review body entities.Review true "Данные отзыва"
+	// @Success 200 {object} entities.Review
+	// @Router /books/reviews/{id} [post]
+	// @Router /books/reviews/{id} [get]
+	// @Router /books/reviews/{id} [put]
+	// @Router /books/reviews/{id} [delete]
+	http.HandleFunc("/books/reviews/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
 			sql.AddReview(w, r)
@@ -291,15 +303,16 @@ func main() {
 			sql.UpdateReview(w, r)
 		case http.MethodDelete:
 			sql.DeleteReview(w, r)
-
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 
+	fmt.Println("Server is running on :8000")
+	fmt.Println("Swagger UI: http://localhost:8000/swagger/index.html")
+
 	err = http.ListenAndServe(":8000", nil)
 	if err != nil {
-		fmt.Print("job")
+		fmt.Printf("Ошибка запуска сервера: %v\n", err)
 	}
-
 }
