@@ -106,7 +106,7 @@ definitions:
       role:
         type: string
     type: object
-host: localhost:8000
+host: https://project11a-backend-the-seal-division.onrender.com
 info:
   contact:
     email: '[email protected]'
