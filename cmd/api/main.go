@@ -25,7 +25,7 @@ import (
 // @contact.email [email protected]
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
-// @host localhost:8000
+// @host https://project11a-backend-the-seal-division.onrender.com
 // @BasePath /
 // @schemes http https
 

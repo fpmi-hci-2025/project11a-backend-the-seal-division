@@ -19,7 +19,7 @@
         },
         "version": "1.0.0"
     },
-    "host": "localhost:8000",
+    "host": "https://project11a-backend-the-seal-division.onrender.com",
     "basePath": "/",
     "paths": {
         "/books": {
