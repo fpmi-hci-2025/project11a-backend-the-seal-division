@@ -293,13 +293,27 @@ func deleteReviewHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func main() {
+	corsHandler := func(handler http.HandlerFunc) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Access-Control-Allow-Origin", "*")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, PATCH, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+
+			if r.Method == "OPTIONS" {
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+
+			handler(w, r)
+		}
+	}
+
 	db, err := sql.ConnectDB()
 	if err != nil {
 		fmt.Printf("Ошибка подключения к БД: %v\n", err)
 		return
 	}
 
-	// Автомиграция
 	db.AutoMigrate(
 		&entities.User{},
 		&entities.Publisher{},
@@ -309,24 +323,21 @@ func main() {
 		&entities.Discount{},
 	)
 
-	// Swagger документация
-	http.HandleFunc("/swagger/", httpSwagger.Handler(
+	http.HandleFunc("/swagger/", corsHandler(httpSwagger.Handler(
 		httpSwagger.URL("http://localhost:8000/swagger/doc.json"),
-	))
+	)))
 
-	// Health check endpoint
-	http.HandleFunc("/health", healthHandler)
+	http.HandleFunc("/health", corsHandler(healthHandler))
 
-	// Books endpoints
-	http.HandleFunc("/books", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/books", corsHandler(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			addBookHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}))
 
-	http.HandleFunc("/books/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/books/", corsHandler(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodDelete:
 			deleteBookHandler(w, r)
@@ -337,85 +348,81 @@ func main() {
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}))
 
-	http.HandleFunc("/books/categories/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/books/categories/", corsHandler(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			getBooksByCategoryHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}))
 
-	http.HandleFunc("/books/publishers/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/books/publishers/", corsHandler(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			getBooksByPublisherHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}))
 
-	http.HandleFunc("/books/authors/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/books/authors/", corsHandler(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			getBooksByAuthorHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}))
 
-	// Publishers endpoints
-	http.HandleFunc("/publishers", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/publishers", corsHandler(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			addPublisherHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}))
 
-	http.HandleFunc("/publishers/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/publishers/", corsHandler(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			getPublisherHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}))
 
-	// Discounts endpoints
-	http.HandleFunc("/discounts", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/discounts", corsHandler(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			addDiscountHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}))
 
-	http.HandleFunc("/discounts/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/discounts/", corsHandler(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPatch {
 			updateDiscountHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}))
 
-	// Users endpoints
-	http.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/users", corsHandler(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			addUserHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}))
 
-	// Orders endpoints
-	http.HandleFunc("/orders", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/orders", corsHandler(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			addOrderHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}))
 
-	http.HandleFunc("/orders/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/orders/", corsHandler(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
 			getOrderHandler(w, r)
@@ -424,10 +431,9 @@ func main() {
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}))
 
-	// Reviews endpoints
-	http.HandleFunc("/books/reviews/", func(w http.ResponseWriter, r *http.Request) {
+	http.HandleFunc("/books/reviews/", corsHandler(func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
 			addReviewHandler(w, r)
@@ -440,7 +446,7 @@ func main() {
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
-	})
+	}))
 
 	fmt.Println("Server is running on :8000")
 	fmt.Println("Swagger UI: http://localhost:8000/swagger/index.html")
