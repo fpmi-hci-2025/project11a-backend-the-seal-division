@@ -20,17 +20,277 @@ import (
 // @version 1.0.0
 // @description REST API для онлайн-магазина книг
 // @termsOfService http://swagger.io/terms/
-
 // @contact.name API Support
 // @contact.url http://www.swagger.io/support
 // @contact.email [email protected]
-
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
-
 // @host localhost:8000
 // @BasePath /
 // @schemes http https
+
+// @Summary Health check
+// @Description Проверка работоспособности API
+// @Tags health
+// @Accept json
+// @Produce json
+// @Success 200 {object} map[string]string
+// @Router /health [get]
+func healthHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{
+		"status":  "OK",
+		"service": "bookstore-api",
+	})
+}
+
+// @Summary Добавить книгу
+// @Description Создание новой книги в базе данных
+// @Tags books
+// @Accept json
+// @Produce json
+// @Param book body entities.Book true "Данные книги"
+// @Success 201 {object} entities.Book
+// @Failure 400 {object} map[string]string
+// @Router /books [post]
+func addBookHandler(w http.ResponseWriter, r *http.Request) {
+	sql.AddBook(w, r)
+}
+
+// @Summary Получить книгу по ID
+// @Description Получение информации о книге по ID
+// @Tags books
+// @Accept json
+// @Produce json
+// @Param id path int true "ID книги"
+// @Success 200 {object} entities.Book
+// @Failure 404 {object} map[string]string
+// @Router /books/{id} [get]
+func getBookHandler(w http.ResponseWriter, r *http.Request) {
+	sql.GetBook(w, r)
+}
+
+// @Summary Обновить книгу
+// @Description Обновление информации о книге
+// @Tags books
+// @Accept json
+// @Produce json
+// @Param id path int true "ID книги"
+// @Param book body entities.Book true "Новые данные книги"
+// @Success 200 {object} entities.Book
+// @Failure 400 {object} map[string]string
+// @Router /books/{id} [put]
+func updateBookHandler(w http.ResponseWriter, r *http.Request) {
+	sql.UpdateBook(w, r)
+}
+
+// @Summary Удалить книгу
+// @Description Удаление книги по ID
+// @Tags books
+// @Accept json
+// @Produce json
+// @Param id path int true "ID книги"
+// @Success 200 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /books/{id} [delete]
+func deleteBookHandler(w http.ResponseWriter, r *http.Request) {
+	sql.DeleteBook(w, r)
+}
+
+// @Summary Получить книги по категории
+// @Description Получение списка книг определенной категории
+// @Tags books
+// @Accept json
+// @Produce json
+// @Param category path string true "Категория книг"
+// @Success 200 {array} entities.Book
+// @Router /books/categories/{category} [get]
+func getBooksByCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	sql.GetBookCategory(w, r)
+}
+
+// @Summary Получить книги по издателю
+// @Description Получение списка книг определенного издателя
+// @Tags books
+// @Accept json
+// @Produce json
+// @Param publisher path string true "Издатель"
+// @Success 200 {array} entities.Book
+// @Router /books/publishers/{publisher} [get]
+func getBooksByPublisherHandler(w http.ResponseWriter, r *http.Request) {
+	sql.GetBookPublishers(w, r)
+}
+
+// @Summary Получить книги по автору
+// @Description Получение списка книг определенного автора
+// @Tags books
+// @Accept json
+// @Produce json
+// @Param author path string true "Автор"
+// @Success 200 {array} entities.Book
+// @Router /books/authors/{author} [get]
+func getBooksByAuthorHandler(w http.ResponseWriter, r *http.Request) {
+	sql.GetBookAuthors(w, r)
+}
+
+// @Summary Добавить издателя
+// @Description Создание нового издателя
+// @Tags publishers
+// @Accept json
+// @Produce json
+// @Param publisher body entities.Publisher true "Данные издателя"
+// @Success 201 {object} entities.Publisher
+// @Failure 400 {object} map[string]string
+// @Router /publishers [post]
+func addPublisherHandler(w http.ResponseWriter, r *http.Request) {
+	sql.AddPublisher(w, r)
+}
+
+// @Summary Получить издателя
+// @Description Получение информации об издателе по ID
+// @Tags publishers
+// @Accept json
+// @Produce json
+// @Param id path int true "ID издателя"
+// @Success 200 {object} entities.Publisher
+// @Failure 404 {object} map[string]string
+// @Router /publishers/{id} [get]
+func getPublisherHandler(w http.ResponseWriter, r *http.Request) {
+	sql.GetPublisher(w, r)
+}
+
+// @Summary Добавить скидку
+// @Description Создание новой скидки
+// @Tags discounts
+// @Accept json
+// @Produce json
+// @Param discount body entities.Discount true "Данные скидки"
+// @Success 201 {object} entities.Discount
+// @Failure 400 {object} map[string]string
+// @Router /discounts [post]
+func addDiscountHandler(w http.ResponseWriter, r *http.Request) {
+	sql.AddDiscount(w, r)
+}
+
+// @Summary Обновить скидку
+// @Description Обновление информации о скидке
+// @Tags discounts
+// @Accept json
+// @Produce json
+// @Param id path int true "ID скидки"
+// @Param discount body entities.Discount true "Новые данные скидки"
+// @Success 200 {object} entities.Discount
+// @Failure 400 {object} map[string]string
+// @Router /discounts/{id} [patch]
+func updateDiscountHandler(w http.ResponseWriter, r *http.Request) {
+	sql.UpdateDiscounts(w, r)
+}
+
+// @Summary Добавить пользователя
+// @Description Регистрация нового пользователя
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param user body entities.User true "Данные пользователя"
+// @Success 201 {object} entities.User
+// @Failure 400 {object} map[string]string
+// @Router /users [post]
+func addUserHandler(w http.ResponseWriter, r *http.Request) {
+	sql.AddUser(w, r)
+}
+
+// @Summary Создать заказ
+// @Description Создание нового заказа
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param order body entities.Orders true "Данные заказа"
+// @Success 201 {object} entities.Orders
+// @Failure 400 {object} map[string]string
+// @Router /orders [post]
+func addOrderHandler(w http.ResponseWriter, r *http.Request) {
+	sql.AddOrder(w, r)
+}
+
+// @Summary Получить заказ
+// @Description Получение информации о заказе по ID
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param id path int true "ID заказа"
+// @Success 200 {object} entities.Orders
+// @Failure 404 {object} map[string]string
+// @Router /orders/{id} [get]
+func getOrderHandler(w http.ResponseWriter, r *http.Request) {
+	sql.GetOrder(w, r)
+}
+
+// @Summary Удалить заказ
+// @Description Удаление заказа по ID
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param id path int true "ID заказа"
+// @Success 200 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /orders/{id} [delete]
+func deleteOrderHandler(w http.ResponseWriter, r *http.Request) {
+	sql.DeleteOrder(w, r)
+}
+
+// @Summary Добавить отзыв
+// @Description Создание нового отзыва
+// @Tags reviews
+// @Accept json
+// @Produce json
+// @Param id path int true "ID книги"
+// @Param review body entities.Review true "Данные отзыва"
+// @Success 201 {object} entities.Review
+// @Failure 400 {object} map[string]string
+// @Router /books/reviews/{id} [post]
+func addReviewHandler(w http.ResponseWriter, r *http.Request) {
+	sql.AddReview(w, r)
+}
+
+// @Summary Получить отзыв
+// @Description Получение информации об отзыве по ID
+// @Tags reviews
+// @Accept json
+// @Produce json
+// @Param id path int true "ID отзыва"
+// @Success 200 {object} entities.Review
+// @Failure 404 {object} map[string]string
+// @Router /books/reviews/{id} [get]
+func getReviewHandler(w http.ResponseWriter, r *http.Request) {
+	sql.GetReview(w, r)
+}
+
+// @Summary Обновить отзыв
+// @Description Обновление информации об отзыве
+// @Tags reviews
+// @Accept json
+// @Produce json
+// @Param id path int true "ID отзыва"
+// @Param review body entities.Review true "Новые данные отзыва"
+// @Success 200 {object} entities.Review
+// @Failure 400 {object} map[string]string
+// @Router /books/reviews/{id} [put]
+func updateReviewHandler(w http.ResponseWriter, r *http.Request) {
+	sql.UpdateReview(w, r)
+}
+
+// @Summary Удалить отзыв
+// @Description Удаление отзыва по ID
+// @Tags reviews
+// @Accept json
+// @Produce json
+// @Param id path int true "ID отзыва"
+// @Success 200 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /books/reviews/{id} [delete]
+func deleteReviewHandler(w http.ResponseWriter, r *http.Request) {
+	sql.DeleteReview(w, r)
+}
 
 func main() {
 	db, err := sql.ConnectDB()
@@ -54,255 +314,129 @@ func main() {
 		httpSwagger.URL("http://localhost:8000/swagger/doc.json"),
 	))
 
-	// @Summary Health check
-	// @Description Проверка работоспособности API
-	// @Tags health
-	// @Accept json
-	// @Produce json
-	// @Success 200 {object} map[string]string
-	// @Router /health [get]
-	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(map[string]string{
-			"status":  "OK",
-			"service": "bookstore-api",
-		})
-	})
+	// Health check endpoint
+	http.HandleFunc("/health", healthHandler)
 
 	// Books endpoints
-	// @Summary Добавить книгу
-	// @Description Создание новой книги в базе данных
-	// @Tags books
-	// @Accept json
-	// @Produce json
-	// @Param book body entities.Book true "Данные книги"
-	// @Success 201 {object} entities.Book
-	// @Failure 400 {object} map[string]string
-	// @Router /books [post]
 	http.HandleFunc("/books", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
-			sql.AddBook(w, r)
+			addBookHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 
-	// @Summary Операции с книгой
-	// @Description Получение, обновление или удаление книги по ID
-	// @Tags books
-	// @Accept json
-	// @Produce json
-	// @Param id path int true "ID книги"
-	// @Success 200 {object} entities.Book
-	// @Failure 404 {object} map[string]string
-	// @Router /books/{id} [get]
-	// @Router /books/{id} [put]
-	// @Router /books/{id} [delete]
 	http.HandleFunc("/books/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodDelete:
-			sql.DeleteBook(w, r)
+			deleteBookHandler(w, r)
 		case http.MethodGet:
-			sql.GetBook(w, r)
+			getBookHandler(w, r)
 		case http.MethodPut:
-			sql.UpdateBook(w, r)
+			updateBookHandler(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 
-	// @Summary Получить книги по категории
-	// @Description Получение списка книг определенной категории
-	// @Tags books
-	// @Accept json
-	// @Produce json
-	// @Param category path string true "Категория книг"
-	// @Success 200 {array} entities.Book
-	// @Router /books/categories/{category} [get]
 	http.HandleFunc("/books/categories/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
-			sql.GetBookCategory(w, r)
+			getBooksByCategoryHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 
-	// @Summary Получить книги по издателю
-	// @Description Получение списка книг определенного издателя
-	// @Tags books
-	// @Accept json
-	// @Produce json
-	// @Param publisher path string true "Издатель"
-	// @Success 200 {array} entities.Book
-	// @Router /books/publishers/{publisher} [get]
 	http.HandleFunc("/books/publishers/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
-			sql.GetBookPublishers(w, r)
+			getBooksByPublisherHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 
-	// @Summary Получить книги по автору
-	// @Description Получение списка книг определенного автора
-	// @Tags books
-	// @Accept json
-	// @Produce json
-	// @Param author path string true "Автор"
-	// @Success 200 {array} entities.Book
-	// @Router /books/authors/{author} [get]
 	http.HandleFunc("/books/authors/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
-			sql.GetBookAuthors(w, r)
+			getBooksByAuthorHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 
 	// Publishers endpoints
-	// @Summary Добавить издателя
-	// @Description Создание нового издателя
-	// @Tags publishers
-	// @Accept json
-	// @Produce json
-	// @Param publisher body entities.Publisher true "Данные издателя"
-	// @Success 201 {object} entities.Publisher
-	// @Router /publishers [post]
 	http.HandleFunc("/publishers", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
-			sql.AddPublisher(w, r)
+			addPublisherHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 
-	// @Summary Получить издателя
-	// @Description Получение информации об издателе по ID
-	// @Tags publishers
-	// @Accept json
-	// @Produce json
-	// @Param id path int true "ID издателя"
-	// @Success 200 {object} entities.Publisher
-	// @Router /publishers/{id} [get]
 	http.HandleFunc("/publishers/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
-			sql.GetPublisher(w, r)
+			getPublisherHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 
 	// Discounts endpoints
-	// @Summary Добавить скидку
-	// @Description Создание новой скидки
-	// @Tags discounts
-	// @Accept json
-	// @Produce json
-	// @Param discount body entities.Discount true "Данные скидки"
-	// @Success 201 {object} entities.Discount
-	// @Router /discounts [post]
 	http.HandleFunc("/discounts", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
-			sql.AddDiscount(w, r)
+			addDiscountHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 
-	// @Summary Обновить скидку
-	// @Description Обновление информации о скидке
-	// @Tags discounts
-	// @Accept json
-	// @Produce json
-	// @Param id path int true "ID скидки"
-	// @Param discount body entities.Discount true "Новые данные скидки"
-	// @Success 200 {object} entities.Discount
-	// @Router /discounts/{id} [patch]
 	http.HandleFunc("/discounts/", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPatch {
-			sql.UpdateDiscounts(w, r)
+			updateDiscountHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 
 	// Users endpoints
-	// @Summary Добавить пользователя
-	// @Description Регистрация нового пользователя
-	// @Tags users
-	// @Accept json
-	// @Produce json
-	// @Param user body entities.User true "Данные пользователя"
-	// @Success 201 {object} entities.User
-	// @Router /users [post]
 	http.HandleFunc("/users", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
-			sql.AddUser(w, r)
+			addUserHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 
 	// Orders endpoints
-	// @Summary Создать заказ
-	// @Description Создание нового заказа
-	// @Tags orders
-	// @Accept json
-	// @Produce json
-	// @Param order body entities.Orders true "Данные заказа"
-	// @Success 201 {object} entities.Orders
-	// @Router /orders [post]
 	http.HandleFunc("/orders", func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
-			sql.AddOrder(w, r)
+			addOrderHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 
-	// @Summary Операции с заказом
-	// @Description Получение или удаление заказа по ID
-	// @Tags orders
-	// @Accept json
-	// @Produce json
-	// @Param id path int true "ID заказа"
-	// @Success 200 {object} entities.Orders
-	// @Router /orders/{id} [get]
-	// @Router /orders/{id} [delete]
 	http.HandleFunc("/orders/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodGet:
-			sql.GetOrder(w, r)
+			getOrderHandler(w, r)
 		case http.MethodDelete:
-			sql.DeleteOrder(w, r)
+			deleteOrderHandler(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	})
 
 	// Reviews endpoints
-	// @Summary Операции с отзывами
-	// @Description Создание, получение, обновление или удаление отзыва
-	// @Tags reviews
-	// @Accept json
-	// @Produce json
-	// @Param id path int true "ID отзыва"
-	// @Param review body entities.Review true "Данные отзыва"
-	// @Success 200 {object} entities.Review
-	// @Router /books/reviews/{id} [post]
-	// @Router /books/reviews/{id} [get]
-	// @Router /books/reviews/{id} [put]
-	// @Router /books/reviews/{id} [delete]
 	http.HandleFunc("/books/reviews/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case http.MethodPost:
-			sql.AddReview(w, r)
+			addReviewHandler(w, r)
 		case http.MethodGet:
-			sql.GetReview(w, r)
+			getReviewHandler(w, r)
 		case http.MethodPut:
-			sql.UpdateReview(w, r)
+			updateReviewHandler(w, r)
 		case http.MethodDelete:
-			sql.DeleteReview(w, r)
+			deleteReviewHandler(w, r)
 		default:
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}

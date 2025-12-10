@@ -1,4 +1,111 @@
 basePath: /
+definitions:
+  entities.Book:
+    properties:
+      author:
+        type: string
+      author_id:
+        type: string
+      available:
+        type: string
+      category:
+        type: string
+      category_id:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      isbn:
+        type: string
+      language:
+        type: string
+      link:
+        type: string
+      preorder:
+        type: boolean
+      price:
+        type: string
+      publisher:
+        $ref: '#/definitions/entities.Publisher'
+      publisher_id:
+        type: string
+      rating:
+        type: number
+      title:
+        type: string
+    type: object
+  entities.Discount:
+    properties:
+      description:
+        type: string
+      id:
+        type: string
+      percentage:
+        type: number
+      title:
+        type: string
+    type: object
+  entities.Orders:
+    properties:
+      address:
+        type: string
+      id:
+        type: string
+      items:
+        type: string
+      status:
+        type: string
+      total_amount:
+        type: string
+      user_id:
+        type: string
+    type: object
+  entities.Publisher:
+    properties:
+      email:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      phone:
+        type: string
+    type: object
+  entities.Review:
+    properties:
+      book_id:
+        type: string
+      comment:
+        type: string
+      id:
+        type: string
+      rating:
+        type: string
+      user_id:
+        type: string
+    type: object
+  entities.User:
+    properties:
+      address:
+        type: string
+      email:
+        type: string
+      id:
+        type: string
+      lastname:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+      phone:
+        type: string
+      reg_date:
+        type: string
+      role:
+        type: string
+    type: object
 host: localhost:8000
 info:
   contact:
@@ -12,7 +119,554 @@ info:
   termsOfService: http://swagger.io/terms/
   title: BookStore Backend API
   version: 1.0.0
-paths: {}
+paths:
+  /books:
+    post:
+      consumes:
+      - application/json
+      description: Создание новой книги в базе данных
+      parameters:
+      - description: Данные книги
+        in: body
+        name: book
+        required: true
+        schema:
+          $ref: '#/definitions/entities.Book'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.Book'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Добавить книгу
+      tags:
+      - books
+  /books/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаление книги по ID
+      parameters:
+      - description: ID книги
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Удалить книгу
+      tags:
+      - books
+    get:
+      consumes:
+      - application/json
+      description: Получение информации о книге по ID
+      parameters:
+      - description: ID книги
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Book'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Получить книгу по ID
+      tags:
+      - books
+    put:
+      consumes:
+      - application/json
+      description: Обновление информации о книге
+      parameters:
+      - description: ID книги
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Новые данные книги
+        in: body
+        name: book
+        required: true
+        schema:
+          $ref: '#/definitions/entities.Book'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Book'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Обновить книгу
+      tags:
+      - books
+  /books/authors/{author}:
+    get:
+      consumes:
+      - application/json
+      description: Получение списка книг определенного автора
+      parameters:
+      - description: Автор
+        in: path
+        name: author
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.Book'
+            type: array
+      summary: Получить книги по автору
+      tags:
+      - books
+  /books/categories/{category}:
+    get:
+      consumes:
+      - application/json
+      description: Получение списка книг определенной категории
+      parameters:
+      - description: Категория книг
+        in: path
+        name: category
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.Book'
+            type: array
+      summary: Получить книги по категории
+      tags:
+      - books
+  /books/publishers/{publisher}:
+    get:
+      consumes:
+      - application/json
+      description: Получение списка книг определенного издателя
+      parameters:
+      - description: Издатель
+        in: path
+        name: publisher
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.Book'
+            type: array
+      summary: Получить книги по издателю
+      tags:
+      - books
+  /books/reviews/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаление отзыва по ID
+      parameters:
+      - description: ID отзыва
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Удалить отзыв
+      tags:
+      - reviews
+    get:
+      consumes:
+      - application/json
+      description: Получение информации об отзыве по ID
+      parameters:
+      - description: ID отзыва
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Review'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Получить отзыв
+      tags:
+      - reviews
+    post:
+      consumes:
+      - application/json
+      description: Создание нового отзыва
+      parameters:
+      - description: ID книги
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Данные отзыва
+        in: body
+        name: review
+        required: true
+        schema:
+          $ref: '#/definitions/entities.Review'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.Review'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Добавить отзыв
+      tags:
+      - reviews
+    put:
+      consumes:
+      - application/json
+      description: Обновление информации об отзыве
+      parameters:
+      - description: ID отзыва
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Новые данные отзыва
+        in: body
+        name: review
+        required: true
+        schema:
+          $ref: '#/definitions/entities.Review'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Review'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Обновить отзыв
+      tags:
+      - reviews
+  /discounts:
+    post:
+      consumes:
+      - application/json
+      description: Создание новой скидки
+      parameters:
+      - description: Данные скидки
+        in: body
+        name: discount
+        required: true
+        schema:
+          $ref: '#/definitions/entities.Discount'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.Discount'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Добавить скидку
+      tags:
+      - discounts
+  /discounts/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Обновление информации о скидке
+      parameters:
+      - description: ID скидки
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Новые данные скидки
+        in: body
+        name: discount
+        required: true
+        schema:
+          $ref: '#/definitions/entities.Discount'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Discount'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Обновить скидку
+      tags:
+      - discounts
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Проверка работоспособности API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Health check
+      tags:
+      - health
+  /orders:
+    post:
+      consumes:
+      - application/json
+      description: Создание нового заказа
+      parameters:
+      - description: Данные заказа
+        in: body
+        name: order
+        required: true
+        schema:
+          $ref: '#/definitions/entities.Orders'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.Orders'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Создать заказ
+      tags:
+      - orders
+  /orders/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: Удаление заказа по ID
+      parameters:
+      - description: ID заказа
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Удалить заказ
+      tags:
+      - orders
+    get:
+      consumes:
+      - application/json
+      description: Получение информации о заказе по ID
+      parameters:
+      - description: ID заказа
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Orders'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Получить заказ
+      tags:
+      - orders
+  /publishers:
+    post:
+      consumes:
+      - application/json
+      description: Создание нового издателя
+      parameters:
+      - description: Данные издателя
+        in: body
+        name: publisher
+        required: true
+        schema:
+          $ref: '#/definitions/entities.Publisher'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.Publisher'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Добавить издателя
+      tags:
+      - publishers
+  /publishers/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Получение информации об издателе по ID
+      parameters:
+      - description: ID издателя
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Publisher'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Получить издателя
+      tags:
+      - publishers
+  /users:
+    post:
+      consumes:
+      - application/json
+      description: Регистрация нового пользователя
+      parameters:
+      - description: Данные пользователя
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/entities.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Добавить пользователя
+      tags:
+      - users
 schemes:
 - http
 - https
