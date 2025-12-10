@@ -1,7 +1,7 @@
 {
     "schemes": [
-        "http",
-        "https"
+        "https",
+        "http"
     ],
     "swagger": "2.0",
     "info": {
@@ -19,7 +19,7 @@
         },
         "version": "1.0.0"
     },
-    "host": "https://project11a-backend-the-seal-division.onrender.com",
+    "host": "project11a-backend-the-seal-division.onrender.com",
     "basePath": "/",
     "paths": {
         "/books": {

@@ -25,9 +25,9 @@ import (
 // @contact.email [email protected]
 // @license.name MIT
 // @license.url https://opensource.org/licenses/MIT
-// @host https://project11a-backend-the-seal-division.onrender.com
+// @host project11a-backend-the-seal-division.onrender.com
 // @BasePath /
-// @schemes http https
+// @schemes https http
 
 // @Summary Health check
 // @Description Проверка работоспособности API
@@ -324,7 +324,7 @@ func main() {
 	)
 
 	http.HandleFunc("/swagger/", corsHandler(httpSwagger.Handler(
-		httpSwagger.URL("http://localhost:8000/swagger/doc.json"),
+		httpSwagger.URL("https://project11a-backend-the-seal-division.onrender.com/swagger/doc.json"),
 	)))
 
 	http.HandleFunc("/health", corsHandler(healthHandler))
