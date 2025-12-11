@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -18,16 +19,7 @@ import (
 	"gorm.io/gorm"
 )
 
-var (
-	db       *gorm.DB
-	book     entities.Book
-	pub      entities.Publisher
-	disc     entities.Discount
-	user     entities.User
-	rev      entities.Review
-	order    entities.Orders
-	category entities.Category
-)
+var db *gorm.DB
 
 func ConnectDB() (*gorm.DB, error) {
 	var err error
@@ -48,31 +40,6 @@ func ConnectDB() (*gorm.DB, error) {
 			host, port, user, password, dbname, sslmode,
 		)
 	}
-
-	// dsn := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=disable",
-	// 	os.Getenv("DB_HOST"),
-	// 	os.Getenv("DB_USER"),
-	// 	os.Getenv("DB_PASSWORD"),
-	// 	os.Getenv("DB_NAME"),
-	// 	os.Getenv("DB_PORT"))
-
-	// db, err = gorm.Open(postgres.Open(dsn), &gorm.Config{})
-
-	// if err != nil {
-	// 	return nil, fmt.Errorf("ошибка подключения к БД: %w", err)
-	// }
-
-	// sqlDB, err := db.DB()
-	// if err != nil {
-	// 	return nil, fmt.Errorf("ошибка получения sql.DB: %w", err)
-	// }
-
-	// if err = runMigrations(sqlDB); err != nil {
-	// 	return nil, fmt.Errorf("ошибка миграций: %w", err)
-	// }
-
-	// fmt.Println("Подключение к БД успешно установлено")
-	// return db, nil
 
 	migrationDB, err := sql.Open("postgres", dsn)
 	if err != nil {
@@ -127,7 +94,6 @@ func runMigrations(sqlDB *sql.DB) error {
 		m, err = migrate.NewWithDatabaseInstance(
 			path,
 			"bookstoredb_91of",
-			//"person_db",
 			driver,
 		)
 
@@ -219,613 +185,505 @@ func runMigrations(sqlDB *sql.DB) error {
 	return nil
 }
 
-func AddBook(w http.ResponseWriter, r *http.Request) error {
+// ==================== BOOKS ====================
 
+func AddBook(w http.ResponseWriter, r *http.Request) error {
+	var book entities.Book
 	if err := json.NewDecoder(r.Body).Decode(&book); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
 
-	if err := SaveBook(db, &book); err != nil {
+	if err := db.Create(&book).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(book)
 	return nil
 }
+
 func DeleteBook(w http.ResponseWriter, r *http.Request) error {
-	id := r.URL.Path[len("/books/"):]
-	if err := json.NewDecoder(r.Body).Decode(&book); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	idStr := strings.TrimPrefix(r.URL.Path, "/books/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return err
 	}
 
-	if err := DelBook(db, id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return err
+	result := db.Delete(&entities.Book{}, id)
+	if result.Error != nil {
+		http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+		return result.Error
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	if result.RowsAffected == 0 {
+		http.Error(w, "Book not found", http.StatusNotFound)
+		return errors.New("book not found")
+	}
+
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"message": "Book deleted successfully"}`))
 	return nil
 }
+
 func UpdateBook(w http.ResponseWriter, r *http.Request) error {
-	id := r.URL.Path[len("/books/"):]
-	var updatedBook entities.Book
-	if err := json.NewDecoder(r.Body).Decode(&book); err != nil {
+	idStr := strings.TrimPrefix(r.URL.Path, "/books/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return err
+	}
+
+	var updates map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
 
-	if err := NewBook(db, id, updatedBook); err != nil {
+	var book entities.Book
+	if err := db.First(&book, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Book not found", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return err
+	}
+
+	if err := db.Model(&book).Updates(updates).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(book)
 	return nil
 }
+
 func GetBook(w http.ResponseWriter, r *http.Request) error {
-	id := r.URL.Path[len("/books/"):]
-	if id == "" {
-		return fmt.Errorf("ID is required")
+	idStr := strings.TrimPrefix(r.URL.Path, "/books/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return err
 	}
 
-	_, err := ReceiveBook(db, id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-
+	var book entities.Book
+	if err := db.Preload("Publisher").Preload("Category").First(&book, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Book not found", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-
-	if err1 := json.NewEncoder(w).Encode(book); err1 != nil {
-		http.Error(w, err1.Error(), http.StatusInternalServerError)
-		return err1
-	}
-
+	json.NewEncoder(w).Encode(book)
 	return nil
 }
+
 func GetBookCategory(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Path[len("/books/categories/"):]
-	if id == "" {
-		http.Error(w, "ID is required", http.StatusBadRequest)
+	categoryName := strings.TrimPrefix(r.URL.Path, "/books/categories/")
+	if categoryName == "" {
+		http.Error(w, "Category name is required", http.StatusBadRequest)
 		return
 	}
 
-	category, err := ReceiveBookCategory(db, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			http.Error(w, "Book not found", http.StatusNotFound)
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		return
-	}
-
-	returnJSON(w, category)
-}
-func GetBookAuthors(w http.ResponseWriter, r *http.Request) {
-
-	id := r.URL.Path[len("/books/authors/"):]
-
-	if id == "" {
-		http.Error(w, "ID is required", http.StatusBadRequest)
-		return
-	}
-
-	authors, err := ReceiveBookAuthors(db, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			http.Error(w, "Book not found", http.StatusNotFound)
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		return
-	}
-
-	returnJSON(w, authors)
-}
-func GetBookPublishers(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Path[len("/books/publishers/"):]
-	if id == "" {
-		http.Error(w, "ID is required", http.StatusBadRequest)
-		return
-	}
-
-	publisher, err := ReceiveBookPublishers(db, id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			http.Error(w, "Book not found", http.StatusNotFound)
-		} else {
-			http.Error(w, err.Error(), http.StatusInternalServerError)
-		}
-		return
-	}
-
-	returnJSON(w, publisher)
-}
-func returnJSON(w http.ResponseWriter, data interface{}) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-
-	if err := json.NewEncoder(w).Encode(data); err != nil {
+	var books []entities.Book
+	if err := db.Preload("Publisher").Preload("Category").
+		Joins("JOIN categories ON categories.id = books.category_id").
+		Where("categories.name = ?", categoryName).
+		Find(&books).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
 	}
+
+	returnJSON(w, books)
 }
-func ReceiveBookCategory(db *gorm.DB, id string) (string, error) {
 
-	if err := db.First(&book, id).Error; err != nil {
-		return "", err
+func GetBookAuthors(w http.ResponseWriter, r *http.Request) {
+	author := strings.TrimPrefix(r.URL.Path, "/books/authors/")
+	if author == "" {
+		http.Error(w, "Author name is required", http.StatusBadRequest)
+		return
 	}
 
-	return book.Category.Name, nil
+	var books []entities.Book
+	if err := db.Preload("Publisher").Preload("Category").
+		Where("author = ?", author).
+		Find(&books).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	returnJSON(w, books)
 }
-func ReceiveBookAuthors(db *gorm.DB, id string) (string, error) {
 
-	if err := db.First(&book, id).Error; err != nil {
-		return "", err
+func GetBookPublishers(w http.ResponseWriter, r *http.Request) {
+	publisherName := strings.TrimPrefix(r.URL.Path, "/books/publishers/")
+	if publisherName == "" {
+		http.Error(w, "Publisher name is required", http.StatusBadRequest)
+		return
 	}
 
-	return book.Author, nil
+	var books []entities.Book
+	if err := db.Preload("Publisher").Preload("Category").
+		Joins("JOIN publishers ON publishers.id = books.publisher_id").
+		Where("publishers.name = ?", publisherName).
+		Find(&books).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	returnJSON(w, books)
 }
-func ReceiveBookPublishers(db *gorm.DB, id string) (string, error) {
 
-	if err := db.First(&book, id).Error; err != nil {
-		return "", err
-	}
-
-	return book.Publisher.Name, nil
-}
-func SaveBook(db *gorm.DB, book *entities.Book) error {
-	if db == nil {
-		return errors.New("db is nil")
-	}
-	if book == nil {
-		return errors.New("book is nil")
-	}
-	if err := db.Create(book).Error; err != nil {
-		log.Printf("Ошибка при сохранении книги: %v", err)
-		return err
-	}
-	return nil
-}
-func ReceiveBook(db *gorm.DB, id string) (entities.Book, error) {
-	if err := db.Preload("Publisher").First(&book, "id = ?", id).Error; err != nil {
-		return entities.Book{}, err
-	}
-	return book, nil
-}
-func NewBook(db *gorm.DB, id string, updatedBook entities.Book) error {
-
-	if err := db.First(&book, id).Error; err != nil {
-		return err
-	}
-
-	if err := db.Model(&book).Updates(updatedBook).Error; err != nil {
-		return err
-	}
-
-	return nil
-}
-func DelBook(db *gorm.DB, id string) error {
-
-	if err := db.First(&book, id).Error; err != nil {
-		return err
-	}
-
-	if err := db.Delete(&book, id).Error; err != nil {
-		return err
-	}
-
-	return nil
-}
+// ==================== PUBLISHERS ====================
 
 func AddPublisher(w http.ResponseWriter, r *http.Request) error {
-	if err := json.NewDecoder(r.Body).Decode(&pub); err != nil {
+	var publisher entities.Publisher
+	if err := json.NewDecoder(r.Body).Decode(&publisher); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
 
-	if err := SavePublisher(db, &pub); err != nil {
+	if err := db.Create(&publisher).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(publisher)
 	return nil
 }
+
 func GetPublisher(w http.ResponseWriter, r *http.Request) error {
-	id := r.URL.Path[len("/publishers/"):]
-	if id == "" {
-		return fmt.Errorf("ID is required")
+	idStr := strings.TrimPrefix(r.URL.Path, "/publishers/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return err
 	}
 
-	_, err := ReceivePublisher(db, id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-
+	var publisher entities.Publisher
+	if err := db.First(&publisher, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Publisher not found", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-
-	if err1 := json.NewEncoder(w).Encode(pub); err1 != nil {
-		http.Error(w, err1.Error(), http.StatusInternalServerError)
-		return err1
-	}
-
+	json.NewEncoder(w).Encode(publisher)
 	return nil
 }
-func SavePublisher(db *gorm.DB, pub *entities.Publisher) error {
-	if db == nil {
-		return errors.New("db is nil")
-	}
-	if pub == nil {
-		return errors.New("publisher is nil")
-	}
-	if err := db.Create(pub).Error; err != nil {
-		log.Printf("Ошибка при сохранении издательства: %v", err)
-		return err
-	}
-	return nil
-}
-func ReceivePublisher(db *gorm.DB, id string) (entities.Publisher, error) {
-	if err := db.Where("id = ?", id).First(&pub).Error; err != nil {
-		return entities.Publisher{}, err
-	}
-	return pub, nil
-}
+
+// ==================== DISCOUNTS ====================
 
 func AddDiscount(w http.ResponseWriter, r *http.Request) error {
-	if err := json.NewDecoder(r.Body).Decode(&disc); err != nil {
+	var discount entities.Discount
+	if err := json.NewDecoder(r.Body).Decode(&discount); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
 
-	if err := SaveDiscount(db, &disc); err != nil {
+	if err := db.Create(&discount).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(discount)
 	return nil
 }
-func SaveDiscount(db *gorm.DB, disc *entities.Discount) error {
-	if db == nil {
-		return errors.New("db is nil")
-	}
-	if disc == nil {
-		return errors.New("discount is nil")
-	}
-	if err := db.Create(disc).Error; err != nil {
-		log.Printf("Ошибка при сохранении акции: %v", err)
+
+func UpdateDiscounts(w http.ResponseWriter, r *http.Request) error {
+	idStr := strings.TrimPrefix(r.URL.Path, "/discounts/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return err
 	}
-	return nil
-}
-func UpdateDiscounts(w http.ResponseWriter, r *http.Request) error {
-	id := r.URL.Path[len("/discounts/"):]
-	var updatedDisc entities.Discount
-	if err := json.NewDecoder(r.Body).Decode(&disc); err != nil {
+
+	var updates map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
 
-	if err := NewDiscount(db, id, updatedDisc); err != nil {
+	var discount entities.Discount
+	if err := db.First(&discount, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Discount not found", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return err
+	}
+
+	if err := db.Model(&discount).Updates(updates).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(discount)
 	return nil
 }
-func NewDiscount(db *gorm.DB, id string, updatedDisc entities.Discount) error {
 
-	if err := db.First(&disc, id).Error; err != nil {
-		return err
-	}
-
-	if err := db.Model(&disc).Updates(updatedDisc).Error; err != nil {
-		return err
-	}
-
-	return nil
-}
+// ==================== USERS ====================
 
 func AddUser(w http.ResponseWriter, r *http.Request) error {
+	var user entities.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
 
-	if err := SaveUser(db, &user); err != nil {
+	if err := db.Create(&user).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(user)
 	return nil
 }
-func SaveUser(db *gorm.DB, user *entities.User) error {
-	if db == nil {
-		return errors.New("db is nil")
-	}
-	if user == nil {
-		return errors.New("user is nil")
-	}
-	if err := db.Create(user).Error; err != nil {
-		log.Printf("Ошибка при сохранении пользователя: %v", err)
-		return err
-	}
-	return nil
-}
+
+// ==================== ORDERS ====================
 
 func AddOrder(w http.ResponseWriter, r *http.Request) error {
+	var order entities.Orders
 	if err := json.NewDecoder(r.Body).Decode(&order); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
 
-	if err := SaveOrder(db, &order); err != nil {
+	if err := db.Create(&order).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(order)
 	return nil
 }
+
 func GetOrder(w http.ResponseWriter, r *http.Request) error {
-	id := r.URL.Path[len("/orders/"):]
-	if id == "" {
-		return fmt.Errorf("ID is required")
-	}
-
-	_, err := ReceiveOrder(db, id)
+	idStr := strings.TrimPrefix(r.URL.Path, "/orders/")
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return err
+	}
 
+	var order entities.Orders
+	if err := db.Preload("User").First(&order, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Order not found", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-
-	if err1 := json.NewEncoder(w).Encode(order); err1 != nil {
-		http.Error(w, err1.Error(), http.StatusInternalServerError)
-		return err1
-	}
-
+	json.NewEncoder(w).Encode(order)
 	return nil
 }
+
 func DeleteOrder(w http.ResponseWriter, r *http.Request) error {
-	id := r.URL.Path[len("/orders/"):]
-	if err := json.NewDecoder(r.Body).Decode(&order); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	idStr := strings.TrimPrefix(r.URL.Path, "/orders/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return err
 	}
 
-	if err := DelOrder(db, id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return err
+	result := db.Delete(&entities.Orders{}, id)
+	if result.Error != nil {
+		http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+		return result.Error
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	if result.RowsAffected == 0 {
+		http.Error(w, "Order not found", http.StatusNotFound)
+		return errors.New("order not found")
+	}
+
 	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"message": "Order deleted successfully"}`))
 	return nil
 }
-func ReceiveOrder(db *gorm.DB, id string) (entities.Orders, error) {
-	if err := db.Where("id = ?", id).First(&order).Error; err != nil {
-		return entities.Orders{}, err
-	}
-	return order, nil
-}
-func SaveOrder(db *gorm.DB, order *entities.Orders) error {
-	if db == nil {
-		return errors.New("db is nil")
-	}
-	if order == nil {
-		return errors.New("order is nil")
-	}
-	if err := db.Create(order).Error; err != nil {
-		log.Printf("Ошибка при сохранении заказа: %v", err)
-		return err
-	}
-	return nil
-}
-func DelOrder(db *gorm.DB, id string) error {
 
-	if err := db.First(&order, id).Error; err != nil {
-		return err
-	}
-
-	if err := db.Delete(&order, id).Error; err != nil {
-		return err
-	}
-
-	return nil
-}
+// ==================== REVIEWS ====================
 
 func AddReview(w http.ResponseWriter, r *http.Request) error {
-	if err := json.NewDecoder(r.Body).Decode(&rev); err != nil {
+	var review entities.Review
+	if err := json.NewDecoder(r.Body).Decode(&review); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
 
-	if err := SaveReview(db, &rev); err != nil {
+	if err := db.Create(&review).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(review)
 	return nil
 }
+
 func DeleteReview(w http.ResponseWriter, r *http.Request) error {
-	id := r.URL.Path[len("/reviews/"):]
-	if err := json.NewDecoder(r.Body).Decode(&rev); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return err
-	}
-
-	if err := DelReview(db, id); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return err
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	return nil
-}
-func UpdateReview(w http.ResponseWriter, r *http.Request) error {
-	id := r.URL.Path[len("/reviews/"):]
-	var updatedRev entities.Review
-	if err := json.NewDecoder(r.Body).Decode(&rev); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return err
-	}
-
-	if err := NewReview(db, id, updatedRev); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return err
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	return nil
-}
-func GetReview(w http.ResponseWriter, r *http.Request) error {
-	id := r.URL.Path[len("/reviews/"):]
-	if id == "" {
-		return fmt.Errorf("ID is required")
-	}
-
-	_, err := ReceiveReview(db, id)
+	idStr := strings.TrimPrefix(r.URL.Path, "/books/reviews/")
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return err
+	}
 
+	result := db.Delete(&entities.Review{}, id)
+	if result.Error != nil {
+		http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		http.Error(w, "Review not found", http.StatusNotFound)
+		return errors.New("review not found")
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte(`{"message": "Review deleted successfully"}`))
+	return nil
+}
+
+func UpdateReview(w http.ResponseWriter, r *http.Request) error {
+	idStr := strings.TrimPrefix(r.URL.Path, "/books/reviews/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return err
+	}
+
+	var updates map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&updates); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return err
+	}
+
+	var review entities.Review
+	if err := db.First(&review, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Review not found", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return err
+	}
+
+	if err := db.Model(&review).Updates(updates).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-
-	if err1 := json.NewEncoder(w).Encode(rev); err1 != nil {
-		http.Error(w, err1.Error(), http.StatusInternalServerError)
-		return err1
-	}
-
+	json.NewEncoder(w).Encode(review)
 	return nil
 }
-func SaveReview(db *gorm.DB, rev *entities.Review) error {
-	if db == nil {
-		return errors.New("db is nil")
-	}
-	if rev == nil {
-		return errors.New("review is nil")
-	}
-	if err := db.Create(rev).Error; err != nil {
-		log.Printf("Ошибка при сохранении отзыва: %v", err)
+
+func GetReview(w http.ResponseWriter, r *http.Request) error {
+	idStr := strings.TrimPrefix(r.URL.Path, "/books/reviews/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return err
 	}
+
+	var review entities.Review
+	if err := db.Preload("Book").Preload("User").First(&review, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Review not found", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(review)
 	return nil
 }
-func ReceiveReview(db *gorm.DB, id string) (entities.Review, error) {
-	if err := db.Where("id = ?", id).First(&rev).Error; err != nil {
-		return entities.Review{}, err
-	}
-	return rev, nil
-}
-func DelReview(db *gorm.DB, id string) error {
 
-	if err := db.First(&book, id).Error; err != nil {
-		return err
-	}
-
-	if err := db.Delete(&book, id).Error; err != nil {
-		return err
-	}
-
-	return nil
-}
-func NewReview(db *gorm.DB, id string, updatedRev entities.Review) error {
-
-	if err := db.First(&rev, id).Error; err != nil {
-		return err
-	}
-
-	if err := db.Model(&rev).Updates(updatedRev).Error; err != nil {
-		return err
-	}
-
-	return nil
-}
+// ==================== CATEGORIES (if needed) ====================
 
 func AddCategory(w http.ResponseWriter, r *http.Request) error {
+	var category entities.Category
 	if err := json.NewDecoder(r.Body).Decode(&category); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return err
 	}
 
-	if err := SaveCategory(db, &category); err != nil {
+	if err := db.Create(&category).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
+	json.NewEncoder(w).Encode(category)
 	return nil
 }
+
 func GetCategory(w http.ResponseWriter, r *http.Request) error {
-	id := r.URL.Path[len("/categories/"):]
-	if id == "" {
-		return fmt.Errorf("ID is required")
+	idStr := strings.TrimPrefix(r.URL.Path, "/categories/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return err
 	}
 
-	_, err := ReceiveCategory(db, id)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-
+	var category entities.Category
+	if err := db.First(&category, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Category not found", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
 		return err
 	}
 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
-
-	if err1 := json.NewEncoder(w).Encode(category); err1 != nil {
-		http.Error(w, err1.Error(), http.StatusInternalServerError)
-		return err1
-	}
-
+	json.NewEncoder(w).Encode(category)
 	return nil
 }
-func SaveCategory(db *gorm.DB, category *entities.Category) error {
-	if db == nil {
-		return errors.New("db is nil")
+
+// ==================== HELPER FUNCTIONS ====================
+
+func returnJSON(w http.ResponseWriter, data interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
-	if category == nil {
-		return errors.New("category is nil")
-	}
-	if err := db.Create(category).Error; err != nil {
-		log.Printf("Ошибка при сохранении издательства: %v", err)
-		return err
-	}
-	return nil
-}
-func ReceiveCategory(db *gorm.DB, id string) (entities.Category, error) {
-	if err := db.Where("id = ?", id).First(&category).Error; err != nil {
-		return entities.Category{}, err
-	}
-	return category, nil
 }
