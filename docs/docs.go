@@ -482,6 +482,90 @@ const docTemplate = `{
                 }
             }
         },
+        "/categories": {
+            "post": {
+                "description": "Создание новой категории",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Добавить категорию",
+                "parameters": [
+                    {
+                        "description": "Данные категории",
+                        "name": "category",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/entities.Category"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/entities.Category"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/categories/{id}": {
+            "get": {
+                "description": "Получение информации о категории по ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "categories"
+                ],
+                "summary": "Получить категорию",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "ID категории",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/entities.Category"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": {
+                                "type": "string"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/discounts": {
             "post": {
                 "description": "Создание новой скидки",
@@ -862,23 +946,20 @@ const docTemplate = `{
                 "author": {
                     "type": "string"
                 },
-                "author_id": {
-                    "type": "string"
-                },
-                "available": {
+                "available_date": {
                     "type": "string"
                 },
                 "category": {
-                    "type": "string"
+                    "$ref": "#/definitions/entities.Category"
                 },
                 "category_id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "description": {
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "isbn": {
                     "type": "string"
@@ -893,18 +974,29 @@ const docTemplate = `{
                     "type": "boolean"
                 },
                 "price": {
-                    "type": "string"
+                    "type": "number"
                 },
                 "publisher": {
                     "$ref": "#/definitions/entities.Publisher"
                 },
                 "publisher_id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "rating": {
                     "type": "number"
                 },
                 "title": {
+                    "type": "string"
+                }
+            }
+        },
+        "entities.Category": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "integer"
+                },
+                "name": {
                     "type": "string"
                 }
             }
@@ -916,7 +1008,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "percentage": {
                     "type": "number"
@@ -933,7 +1025,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "items": {
                     "type": "string"
@@ -942,10 +1034,13 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "total_amount": {
-                    "type": "string"
+                    "type": "number"
+                },
+                "user": {
+                    "$ref": "#/definitions/entities.User"
                 },
                 "user_id": {
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },
@@ -956,7 +1051,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "name": {
                     "type": "string"
@@ -969,20 +1064,26 @@ const docTemplate = `{
         "entities.Review": {
             "type": "object",
             "properties": {
+                "book": {
+                    "$ref": "#/definitions/entities.Book"
+                },
                 "book_id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "comment": {
                     "type": "string"
                 },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 },
                 "rating": {
                     "type": "string"
                 },
+                "user": {
+                    "$ref": "#/definitions/entities.User"
+                },
                 "user_id": {
-                    "type": "string"
+                    "type": "integer"
                 }
             }
         },
@@ -995,13 +1096,13 @@ const docTemplate = `{
                 "email": {
                     "type": "string"
                 },
+                "first_name": {
+                    "type": "string"
+                },
                 "id": {
-                    "type": "string"
+                    "type": "integer"
                 },
-                "lastname": {
-                    "type": "string"
-                },
-                "name": {
+                "last_name": {
                     "type": "string"
                 },
                 "password": {

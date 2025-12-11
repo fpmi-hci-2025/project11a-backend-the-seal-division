@@ -1,63 +1,72 @@
 package entities
 
+import "time"
+
 type User struct {
-	ID        string `json:"id"`
-	FirstName string `json:"name"`
-	LastName  string `json:"lastname"`
-	Password  string `json:"password"`
-	Email     string `json:"email"`
-	Phone     string `json:"phone"`
-	Address   string `json:"address"`
-	Role      string `json:"role"`
-	RegDate   string `json:"reg_date"`
+	ID        int       `json:"id" gorm:"primaryKey"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	Password  string    `json:"password"`
+	Email     string    `json:"email" gorm:"unique"`
+	Phone     string    `json:"phone"`
+	Address   string    `json:"address"`
+	Role      string    `json:"role"`
+	RegDate   time.Time `json:"reg_date" gorm:"default:CURRENT_TIMESTAMP"`
 }
 
 type Orders struct {
-	ID          string `json:"id" gorm:"column:id;primaryKey"`
-	Items       string `json:"items"`
-	UserID      string `json:"user_id"`
-	TotalAmount string `json:"total_amount"`
-	Status      string `json:"status"`
-	Address     string `json:"address"`
+	ID          int     `json:"id" gorm:"primaryKey"`
+	Items       string  `json:"items"`
+	UserID      int     `json:"user_id"`
+	TotalAmount float64 `json:"total_amount"`
+	Status      string  `json:"status"`
+	Address     string  `json:"address"`
+	User        User    `json:"user" gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 }
 
 type Review struct {
-	ID      string `json:"id"`
+	ID      int    `json:"id" gorm:"primaryKey"`
 	Rating  string `json:"rating"`
 	Comment string `json:"comment"`
-	BookID  string `json:"book_id"`
-	UserID  string `json:"user_id"`
+	BookID  int    `json:"book_id"`
+	UserID  int    `json:"user_id"`
+	Book    Book   `json:"book" gorm:"foreignKey:BookID;constraint:OnDelete:CASCADE"`
+	User    User   `json:"user" gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE"`
 }
 
 type Discount struct {
-	ID          string  `json:"id" gorm:"column:id;primaryKey"`
+	ID          int     `json:"id" gorm:"primaryKey"`
 	Title       string  `json:"title"`
 	Description string  `json:"description"`
-	Percentage  float64 `json:"percentage"`
+	Percentage  float64 `json:"percentage" gorm:"check:percentage >= 0 AND percentage <= 100"`
 }
 
 type Publisher struct {
-	ID    string `json:"id" gorm:"primaryKey"`
+	ID    int    `json:"id" gorm:"primaryKey"`
 	Name  string `json:"name"`
-	Email string `json:"email"`
+	Email string `json:"email" gorm:"unique"`
 	Phone string `json:"phone"`
 }
 
+type Category struct {
+	ID   int    `json:"id" gorm:"primaryKey"`
+	Name string `json:"name"`
+}
+
 type Book struct {
-	ID                string    `json:"id" gorm:"column:id;primaryKey"`
-	ISBN              string    `json:"isbn"`
-	PublisherID       string    `json:"publisher_id"`
-	Title             string    `json:"title"`
-	AuthorID          string    `json:"author_id"`
-	Description       string    `json:"description"`
-	Price             string    `json:"price"`
-	Language          string    `json:"language"`
-	CategoryID        string    `json:"category_id"`
-	Category          string    `json:"category"`
-	Author            string    `json:"author"`
-	Link              string    `json:"link"`
-	Preorder          bool      `json:"preorder"`
-	AvailablePreorder string    `json:"available"`
-	Rating            float64   `json:"rating"`
-	Publisher         Publisher `json:"publisher" gorm:"foreignKey:PublisherID"`
+	ID            int       `json:"id" gorm:"primaryKey"`
+	ISBN          string    `json:"isbn" gorm:"unique"`
+	PublisherID   int       `json:"publisher_id"`
+	Title         string    `json:"title"`
+	Description   string    `json:"description"`
+	Price         float64   `json:"price"`
+	Language      string    `json:"language"`
+	CategoryID    int       `json:"category_id"`
+	Author        string    `json:"author"`
+	Link          string    `json:"link"`
+	Preorder      bool      `json:"preorder" gorm:"default:false"`
+	AvailableDate time.Time `json:"available_date"`
+	Rating        float64   `json:"rating" gorm:"check:rating >= 0 AND rating <= 5"`
+	Publisher     Publisher `json:"publisher" gorm:"foreignKey:PublisherID;constraint:OnDelete:CASCADE"`
+	Category      Category  `json:"category" gorm:"foreignKey:CategoryID;constraint:OnDelete:CASCADE"`
 }

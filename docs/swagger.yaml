@@ -4,18 +4,16 @@ definitions:
     properties:
       author:
         type: string
-      author_id:
-        type: string
-      available:
+      available_date:
         type: string
       category:
-        type: string
+        $ref: '#/definitions/entities.Category'
       category_id:
-        type: string
+        type: integer
       description:
         type: string
       id:
-        type: string
+        type: integer
       isbn:
         type: string
       language:
@@ -25,14 +23,21 @@ definitions:
       preorder:
         type: boolean
       price:
-        type: string
+        type: number
       publisher:
         $ref: '#/definitions/entities.Publisher'
       publisher_id:
-        type: string
+        type: integer
       rating:
         type: number
       title:
+        type: string
+    type: object
+  entities.Category:
+    properties:
+      id:
+        type: integer
+      name:
         type: string
     type: object
   entities.Discount:
@@ -40,7 +45,7 @@ definitions:
       description:
         type: string
       id:
-        type: string
+        type: integer
       percentage:
         type: number
       title:
@@ -51,22 +56,24 @@ definitions:
       address:
         type: string
       id:
-        type: string
+        type: integer
       items:
         type: string
       status:
         type: string
       total_amount:
-        type: string
+        type: number
+      user:
+        $ref: '#/definitions/entities.User'
       user_id:
-        type: string
+        type: integer
     type: object
   entities.Publisher:
     properties:
       email:
         type: string
       id:
-        type: string
+        type: integer
       name:
         type: string
       phone:
@@ -74,16 +81,20 @@ definitions:
     type: object
   entities.Review:
     properties:
+      book:
+        $ref: '#/definitions/entities.Book'
       book_id:
-        type: string
+        type: integer
       comment:
         type: string
       id:
-        type: string
+        type: integer
       rating:
         type: string
+      user:
+        $ref: '#/definitions/entities.User'
       user_id:
-        type: string
+        type: integer
     type: object
   entities.User:
     properties:
@@ -91,11 +102,11 @@ definitions:
         type: string
       email:
         type: string
+      first_name:
+        type: string
       id:
-        type: string
-      lastname:
-        type: string
-      name:
+        type: integer
+      last_name:
         type: string
       password:
         type: string
@@ -423,6 +434,61 @@ paths:
       summary: Обновить отзыв
       tags:
       - reviews
+  /categories:
+    post:
+      consumes:
+      - application/json
+      description: Создание новой категории
+      parameters:
+      - description: Данные категории
+        in: body
+        name: category
+        required: true
+        schema:
+          $ref: '#/definitions/entities.Category'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/entities.Category'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Добавить категорию
+      tags:
+      - categories
+  /categories/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Получение информации о категории по ID
+      parameters:
+      - description: ID категории
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.Category'
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Получить категорию
+      tags:
+      - categories
   /discounts:
     post:
       consumes:
