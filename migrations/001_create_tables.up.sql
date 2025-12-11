@@ -52,19 +52,26 @@ CREATE TABLE publishers (
 -- Таблица книг
 CREATE TABLE books (
                        id SERIAL PRIMARY KEY,
-                       isbn VARCHAR(20) NOT NULL,
+                       isbn VARCHAR(20) NOT NULL UNIQUE,
                        publisher_id INT NOT NULL,
                        title VARCHAR(255) NOT NULL,
-                       author_id INT NOT NULL,
                        description TEXT,
                        price DECIMAL(10, 2) NOT NULL,
                        language VARCHAR(50),
                        category_id INT,
-                       category VARCHAR(50),
                        author VARCHAR(255),
                        link TEXT,
                        preorder BOOLEAN DEFAULT FALSE,
-                       available BOOLEAN DEFAULT FALSE,
+                       availableDate TIMESTAMP,
                        rating DECIMAL(3, 2) CHECK (rating >= 0 AND rating <= 5),
-                       FOREIGN KEY (publisher_id) REFERENCES publishers(id) ON DELETE CASCADE
+                       FOREIGN KEY (publisher_id) REFERENCES publishers(id) ON DELETE CASCADE,
+                       FOREIGN KEY (category_id) REFERENCES category(id) ON DELETE CASCADE
+
+);
+
+
+-- Таблица категорий
+CREATE TABLE category (
+                        id SERIAL PRIMARY KEY,
+                        name VARCHAR(255) NOT NULL UNIQUE
 );

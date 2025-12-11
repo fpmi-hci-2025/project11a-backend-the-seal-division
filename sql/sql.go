@@ -6,26 +6,27 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/lib/pq"
-	pgmigrate "github.com/golang-migrate/migrate/v4/database/postgres"
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
 	"log"
 	"net/http"
 	"os"
 	"strings"
-	"time"
+
+	"github.com/golang-migrate/migrate/v4"
+	pgmigrate "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 var (
-	db    *gorm.DB
-	book  entities.Book
-	pub   entities.Publisher
-	disc  entities.Discount
-	user  entities.User
-	rev   entities.Review
-	order entities.Orders
+	db       *gorm.DB
+	book     entities.Book
+	pub      entities.Publisher
+	disc     entities.Discount
+	user     entities.User
+	rev      entities.Review
+	order    entities.Orders
+	category entities.Category
 )
 
 func ConnectDB() (*gorm.DB, error) {
@@ -122,19 +123,19 @@ func runMigrations(sqlDB *sql.DB) error {
 
 	for _, path := range migrationPaths {
 		log.Printf("Пробуем путь к миграциям: %s", path)
-		
+
 		m, err = migrate.NewWithDatabaseInstance(
 			path,
 			"bookstoredb_91of",
 			//"person_db",
 			driver,
 		)
-		
+
 		if err == nil {
 			log.Printf("Успешно инициализировали миграции с путем: %s", path)
 			break
 		}
-		
+
 		lastErr = err
 		log.Printf("Не удалось с путем %s: %v", path, err)
 	}
@@ -153,10 +154,10 @@ func runMigrations(sqlDB *sql.DB) error {
 
 	if dirty {
 		log.Printf("База данных в dirty состоянии (версия %d). Исправляем...", version)
-		
+
 		if err := m.Force(int(version)); err != nil {
 			log.Printf("Не удалось force версию %d: %v", version, err)
-			
+
 			if err := m.Force(0); err != nil {
 				log.Printf("Не удалось force версию 0: %v", err)
 			} else {
@@ -166,7 +167,7 @@ func runMigrations(sqlDB *sql.DB) error {
 		} else {
 			log.Printf("Успешно установили версию %d", version)
 		}
-		
+
 		if version > 0 {
 			log.Printf("Пробуем down миграцию с версии %d", version)
 			if err := m.Down(); err != nil && !errors.Is(err, migrate.ErrNoChange) {
@@ -180,16 +181,16 @@ func runMigrations(sqlDB *sql.DB) error {
 			log.Println("Нет изменений для применения миграций.")
 			return nil
 		}
-		
+
 		if strings.Contains(err.Error(), "Dirty database") {
 			log.Println("Обнаружено dirty состояние после попытки миграции")
-			
+
 			version, dirty, verErr := m.Version()
 			if verErr != nil && verErr != migrate.ErrNilVersion {
 				log.Printf("Ошибка при получении версии: %v", verErr)
 			} else {
 				log.Printf("Текущее состояние после ошибки: версия=%v, dirty=%v", version, dirty)
-				
+
 				if dirty {
 					log.Printf("Пробуем force версию %d", version)
 					if forceErr := m.Force(int(version)); forceErr != nil {
@@ -200,10 +201,10 @@ func runMigrations(sqlDB *sql.DB) error {
 					}
 				}
 			}
-			
+
 			return fmt.Errorf("не удалось применить миграции из-за dirty состояния: %w", err)
 		}
-		
+
 		return fmt.Errorf("не удалось применить миграции: %w", err)
 	}
 
@@ -363,7 +364,7 @@ func ReceiveBookCategory(db *gorm.DB, id string) (string, error) {
 		return "", err
 	}
 
-	return book.Category, nil
+	return book.Category.Name, nil
 }
 func ReceiveBookAuthors(db *gorm.DB, id string) (string, error) {
 
@@ -563,9 +564,6 @@ func SaveUser(db *gorm.DB, user *entities.User) error {
 	if user == nil {
 		return errors.New("user is nil")
 	}
-	if user.RegDate == "" {
-        user.RegDate = time.Now().String()
-    }
 	if err := db.Create(user).Error; err != nil {
 		log.Printf("Ошибка при сохранении пользователя: %v", err)
 		return err
@@ -772,4 +770,62 @@ func NewReview(db *gorm.DB, id string, updatedRev entities.Review) error {
 	}
 
 	return nil
+}
+
+func AddCategory(w http.ResponseWriter, r *http.Request) error {
+	if err := json.NewDecoder(r.Body).Decode(&category); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return err
+	}
+
+	if err := SaveCategory(db, &category); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusCreated)
+	return nil
+}
+func GetCategory(w http.ResponseWriter, r *http.Request) error {
+	id := r.URL.Path[len("/categories/"):]
+	if id == "" {
+		return fmt.Errorf("ID is required")
+	}
+
+	_, err := ReceiveCategory(db, id)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err1 := json.NewEncoder(w).Encode(category); err1 != nil {
+		http.Error(w, err1.Error(), http.StatusInternalServerError)
+		return err1
+	}
+
+	return nil
+}
+func SaveCategory(db *gorm.DB, category *entities.Category) error {
+	if db == nil {
+		return errors.New("db is nil")
+	}
+	if category == nil {
+		return errors.New("category is nil")
+	}
+	if err := db.Create(category).Error; err != nil {
+		log.Printf("Ошибка при сохранении издательства: %v", err)
+		return err
+	}
+	return nil
+}
+func ReceiveCategory(db *gorm.DB, id string) (entities.Category, error) {
+	if err := db.Where("id = ?", id).First(&category).Error; err != nil {
+		return entities.Category{}, err
+	}
+	return category, nil
 }

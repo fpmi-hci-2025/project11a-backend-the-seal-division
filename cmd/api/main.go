@@ -159,6 +159,32 @@ func getPublisherHandler(w http.ResponseWriter, r *http.Request) {
 	sql.GetPublisher(w, r)
 }
 
+// @Summary Добавить категорию
+// @Description Создание новой категории
+// @Tags categories
+// @Accept json
+// @Produce json
+// @Param category body entities.Category true "Данные категории"
+// @Success 201 {object} entities.Category
+// @Failure 400 {object} map[string]string
+// @Router /categories [post]
+func addCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	sql.AddCategory(w, r)
+}
+
+// @Summary Получить категорию
+// @Description Получение информации о категории по ID
+// @Tags categories
+// @Accept json
+// @Produce json
+// @Param id path int true "ID категории"
+// @Success 200 {object} entities.Category
+// @Failure 404 {object} map[string]string
+// @Router /categories/{id} [get]
+func getCategoryHandler(w http.ResponseWriter, r *http.Request) {
+	sql.GetCategory(w, r)
+}
+
 // @Summary Добавить скидку
 // @Description Создание новой скидки
 // @Tags discounts
@@ -385,6 +411,22 @@ func main() {
 	http.HandleFunc("/publishers/", corsHandler(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet {
 			getPublisherHandler(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}))
+
+	http.HandleFunc("/categories", corsHandler(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			addCategoryHandler(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}))
+
+	http.HandleFunc("/categories/", corsHandler(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			getCategoryHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
