@@ -250,6 +250,23 @@ paths:
       summary: Обновить книгу
       tags:
       - books
+  /books/all:
+    get:
+      consumes:
+      - application/json
+      description: Получение списка всех книг
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.Book'
+            type: array
+      summary: Получить все книги
+      tags:
+      - books
   /books/authors/{author}:
     get:
       consumes:
@@ -438,6 +455,29 @@ paths:
       summary: Обновить отзыв
       tags:
       - reviews
+  /books/reviews/book/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Получение списка отзывов по ID книги
+      parameters:
+      - description: ID книги
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.Review'
+            type: array
+      summary: Получить отзывы книги
+      tags:
+      - reviews
   /categories:
     post:
       consumes:
@@ -491,6 +531,23 @@ paths:
               type: string
             type: object
       summary: Получить категорию
+      tags:
+      - categories
+  /categories/all:
+    get:
+      consumes:
+      - application/json
+      description: Получение списка всех категорий
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.Category'
+            type: array
+      summary: Получить все категории
       tags:
       - categories
   /discounts:
@@ -554,6 +611,23 @@ paths:
       summary: Обновить скидку
       tags:
       - discounts
+  /discounts/all:
+    get:
+      consumes:
+      - application/json
+      description: Получение списка всех скидок
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.Discount'
+            type: array
+      summary: Получить все скидки
+      tags:
+      - discounts
   /health:
     get:
       consumes:
@@ -571,6 +645,34 @@ paths:
       summary: Health check
       tags:
       - health
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Аутентификация пользователя по email и паролю
+      parameters:
+      - description: Данные для входа
+        in: body
+        name: credentials
+        required: true
+        schema:
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.User'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Вход в систему
+      tags:
+      - auth
   /orders:
     post:
       consumes:
@@ -652,6 +754,46 @@ paths:
               type: string
             type: object
       summary: Получить заказ
+      tags:
+      - orders
+  /orders/all:
+    get:
+      consumes:
+      - application/json
+      description: Получение списка всех заказов
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.Orders'
+            type: array
+      summary: Получить все заказы
+      tags:
+      - orders
+  /orders/user/{id}:
+    get:
+      consumes:
+      - application/json
+      description: Получение списка заказов по ID пользователя
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/entities.Orders'
+            type: array
+      summary: Получить заказы пользователя
       tags:
       - orders
   /publishers:

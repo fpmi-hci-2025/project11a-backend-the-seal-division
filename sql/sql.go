@@ -634,7 +634,7 @@ func GetReview(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
-// ==================== CATEGORIES (if needed) ====================
+// ==================== CATEGORIES ====================
 
 func AddCategory(w http.ResponseWriter, r *http.Request) error {
 	var category entities.Category
@@ -675,6 +675,149 @@ func GetCategory(w http.ResponseWriter, r *http.Request) error {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(category)
+	return nil
+}
+
+// ==================== GET ALL ORDERS ====================
+
+func GetAllOrders(w http.ResponseWriter, r *http.Request) error {
+	var orders []entities.Orders
+	if err := db.Preload("User").Find(&orders).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(orders)
+	return nil
+}
+
+// ==================== GET ORDERS BY USER ID ====================
+
+func GetOrdersByUserID(w http.ResponseWriter, r *http.Request) error {
+	userIDStr := strings.TrimPrefix(r.URL.Path, "/orders/user/")
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		http.Error(w, "Invalid User ID", http.StatusBadRequest)
+		return err
+	}
+
+	var orders []entities.Orders
+	if err := db.Preload("User").Where("user_id = ?", userID).Find(&orders).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(orders)
+	return nil
+}
+
+// ==================== GET REVIEWS BY BOOK ID ====================
+
+func GetReviewsByBookID(w http.ResponseWriter, r *http.Request) error {
+	bookIDStr := strings.TrimPrefix(r.URL.Path, "/books/reviews/book/")
+	bookID, err := strconv.Atoi(bookIDStr)
+	if err != nil {
+		http.Error(w, "Invalid Book ID", http.StatusBadRequest)
+		return err
+	}
+
+	var reviews []entities.Review
+	if err := db.Preload("User").Preload("Book").Where("book_id = ?", bookID).Find(&reviews).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(reviews)
+	return nil
+}
+
+// ==================== LOGIN ====================
+
+func Login(w http.ResponseWriter, r *http.Request) error {
+	var credentials struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&credentials); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return err
+	}
+
+	var user entities.User
+	if err := db.Where("email = ?", credentials.Email).First(&user).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return err
+	}
+
+	// В реальном приложении здесь должна быть проверка хешированного пароля
+	// Для простоты сравниваем напрямую (в production используйте bcrypt)
+	if user.Password != credentials.Password {
+		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
+		return errors.New("invalid password")
+	}
+
+	// Скрываем пароль в ответе
+	user.Password = ""
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
+	return nil
+}
+
+// ==================== GET ALL CATEGORIES ====================
+
+func GetAllCategories(w http.ResponseWriter, r *http.Request) error {
+	var categories []entities.Category
+	if err := db.Find(&categories).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(categories)
+	return nil
+}
+
+// ==================== GET ALL BOOKS ====================
+
+func GetAllBooks(w http.ResponseWriter, r *http.Request) error {
+	var books []entities.Book
+	if err := db.Preload("Publisher").Preload("Category").Preload("Discount").Find(&books).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(books)
+	return nil
+}
+
+// ==================== GET ALL DISCOUNTS ====================
+
+func GetAllDiscounts(w http.ResponseWriter, r *http.Request) error {
+	var discounts []entities.Discount
+	if err := db.Find(&discounts).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(discounts)
 	return nil
 }
 
