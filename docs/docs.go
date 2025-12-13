@@ -958,6 +958,12 @@ const docTemplate = `{
                 "description": {
                     "type": "string"
                 },
+                "discount": {
+                    "$ref": "#/definitions/entities.Discount"
+                },
+                "discount_id": {
+                    "type": "integer"
+                },
                 "id": {
                     "type": "integer"
                 },
