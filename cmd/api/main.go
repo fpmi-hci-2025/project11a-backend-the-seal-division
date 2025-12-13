@@ -318,6 +318,87 @@ func deleteReviewHandler(w http.ResponseWriter, r *http.Request) {
 	sql.DeleteReview(w, r)
 }
 
+// @Summary Получить все заказы
+// @Description Получение списка всех заказов
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Success 200 {array} entities.Orders
+// @Router /orders/all [get]
+func getAllOrdersHandler(w http.ResponseWriter, r *http.Request) {
+	sql.GetAllOrders(w, r)
+}
+
+// @Summary Получить заказы пользователя
+// @Description Получение списка заказов по ID пользователя
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param id path int true "ID пользователя"
+// @Success 200 {array} entities.Orders
+// @Router /orders/user/{id} [get]
+func getOrdersByUserHandler(w http.ResponseWriter, r *http.Request) {
+	sql.GetOrdersByUserID(w, r)
+}
+
+// @Summary Получить отзывы книги
+// @Description Получение списка отзывов по ID книги
+// @Tags reviews
+// @Accept json
+// @Produce json
+// @Param id path int true "ID книги"
+// @Success 200 {array} entities.Review
+// @Router /books/reviews/book/{id} [get]
+func getReviewsByBookHandler(w http.ResponseWriter, r *http.Request) {
+	sql.GetReviewsByBookID(w, r)
+}
+
+// @Summary Вход в систему
+// @Description Аутентификация пользователя по email и паролю
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param credentials body object true "Данные для входа" example({"email": "user@example.com", "password": "password123"})
+// @Success 200 {object} entities.User
+// @Failure 401 {object} map[string]string
+// @Router /login [post]
+func loginHandler(w http.ResponseWriter, r *http.Request) {
+	sql.Login(w, r)
+}
+
+// @Summary Получить все категории
+// @Description Получение списка всех категорий
+// @Tags categories
+// @Accept json
+// @Produce json
+// @Success 200 {array} entities.Category
+// @Router /categories/all [get]
+func getAllCategoriesHandler(w http.ResponseWriter, r *http.Request) {
+	sql.GetAllCategories(w, r)
+}
+
+// @Summary Получить все книги
+// @Description Получение списка всех книг
+// @Tags books
+// @Accept json
+// @Produce json
+// @Success 200 {array} entities.Book
+// @Router /books/all [get]
+func getAllBooksHandler(w http.ResponseWriter, r *http.Request) {
+	sql.GetAllBooks(w, r)
+}
+
+// @Summary Получить все скидки
+// @Description Получение списка всех скидок
+// @Tags discounts
+// @Accept json
+// @Produce json
+// @Success 200 {array} entities.Discount
+// @Router /discounts/all [get]
+func getAllDiscountsHandler(w http.ResponseWriter, r *http.Request) {
+	sql.GetAllDiscounts(w, r)
+}
+
 func main() {
 	corsHandler := func(handler http.HandlerFunc) http.HandlerFunc {
 		return func(w http.ResponseWriter, r *http.Request) {
@@ -486,6 +567,62 @@ func main() {
 		case http.MethodDelete:
 			deleteReviewHandler(w, r)
 		default:
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}))
+
+	http.HandleFunc("/orders/all", corsHandler(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			getAllOrdersHandler(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}))
+
+	http.HandleFunc("/orders/user/", corsHandler(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			getOrdersByUserHandler(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}))
+
+	http.HandleFunc("/books/reviews/book/", corsHandler(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			getReviewsByBookHandler(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}))
+
+	http.HandleFunc("/login", corsHandler(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			loginHandler(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}))
+
+	http.HandleFunc("/categories/all", corsHandler(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			getAllCategoriesHandler(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}))
+
+	http.HandleFunc("/books/all", corsHandler(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			getAllBooksHandler(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}))
+
+	http.HandleFunc("/discounts/all", corsHandler(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			getAllDiscountsHandler(w, r)
+		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}
 	}))

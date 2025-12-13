@@ -62,7 +62,7 @@ CREATE TABLE books (
                        author VARCHAR(255),
                        link TEXT,
                        preorder BOOLEAN DEFAULT FALSE,
-                       availableDate TIMESTAMP,
+                       available_date TIMESTAMP,
                        rating DECIMAL(3, 2) CHECK (rating >= 0 AND rating <= 5),
                        discount_id INT,
                        FOREIGN KEY (publisher_id) REFERENCES publishers(id) ON DELETE CASCADE,
