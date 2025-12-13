@@ -64,14 +64,17 @@ CREATE TABLE books (
                        preorder BOOLEAN DEFAULT FALSE,
                        availableDate TIMESTAMP,
                        rating DECIMAL(3, 2) CHECK (rating >= 0 AND rating <= 5),
+                       discount_id INT,
                        FOREIGN KEY (publisher_id) REFERENCES publishers(id) ON DELETE CASCADE,
-                       FOREIGN KEY (category_id) REFERENCES category(id) ON DELETE CASCADE
+                       FOREIGN KEY (category_id) REFERENCES category(id) ON DELETE CASCADE,
+                       FOREIGN KEY (discount_id) REFERENCES discounts(id) ON DELETE CASCADE
+
 
 );
 
 
 -- Таблица категорий
-CREATE TABLE category (
+CREATE TABLE categories (
                         id SERIAL PRIMARY KEY,
                         name VARCHAR(255) NOT NULL UNIQUE
 );

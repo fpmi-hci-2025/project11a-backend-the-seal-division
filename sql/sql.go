@@ -273,7 +273,7 @@ func GetBook(w http.ResponseWriter, r *http.Request) error {
 	}
 
 	var book entities.Book
-	if err := db.Preload("Publisher").Preload("Category").First(&book, id).Error; err != nil {
+	if err := db.Preload("Publisher").Preload("Category").Preload("Discount").First(&book, id).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			http.Error(w, "Book not found", http.StatusNotFound)
 		} else {
@@ -296,7 +296,7 @@ func GetBookCategory(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var books []entities.Book
-	if err := db.Preload("Publisher").Preload("Category").
+	if err := db.Preload("Publisher").Preload("Category").Preload("Discount").
 		Joins("JOIN categories ON categories.id = books.category_id").
 		Where("categories.name = ?", categoryName).
 		Find(&books).Error; err != nil {
@@ -315,7 +315,7 @@ func GetBookAuthors(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var books []entities.Book
-	if err := db.Preload("Publisher").Preload("Category").
+	if err := db.Preload("Publisher").Preload("Category").Preload("Discount").
 		Where("author = ?", author).
 		Find(&books).Error; err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -333,7 +333,7 @@ func GetBookPublishers(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var books []entities.Book
-	if err := db.Preload("Publisher").Preload("Category").
+	if err := db.Preload("Publisher").Preload("Category").Preload("Discount").
 		Joins("JOIN publishers ON publishers.id = books.publisher_id").
 		Where("publishers.name = ?", publisherName).
 		Find(&books).Error; err != nil {

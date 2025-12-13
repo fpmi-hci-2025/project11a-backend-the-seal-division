@@ -67,6 +67,8 @@ type Book struct {
 	Preorder      bool      `json:"preorder" gorm:"default:false"`
 	AvailableDate time.Time `json:"available_date"`
 	Rating        float64   `json:"rating" gorm:"check:rating >= 0 AND rating <= 5"`
+	DiscountID    int       `json:"discount_id"`
 	Publisher     Publisher `json:"publisher" gorm:"foreignKey:PublisherID;constraint:OnDelete:CASCADE"`
 	Category      Category  `json:"category" gorm:"foreignKey:CategoryID;constraint:OnDelete:CASCADE"`
+	Discount      Discount  `json:"discount" gorm:"foreignKey:DiscountID;constraint:OnDelete:CASCADE"`
 }
