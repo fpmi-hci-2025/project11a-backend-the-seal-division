@@ -15,6 +15,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	pgmigrate "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -760,14 +761,12 @@ func Login(w http.ResponseWriter, r *http.Request) error {
 		return err
 	}
 
-	// В реальном приложении здесь должна быть проверка хешированного пароля
-	// Для простоты сравниваем напрямую (в production используйте bcrypt)
-	if user.Password != credentials.Password {
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(credentials.Password))
+	if err != nil {
 		http.Error(w, "Invalid email or password", http.StatusUnauthorized)
 		return errors.New("invalid password")
 	}
 
-	// Скрываем пароль в ответе
 	user.Password = ""
 
 	w.Header().Set("Content-Type", "application/json")
