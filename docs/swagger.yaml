@@ -121,6 +121,17 @@ definitions:
       role:
         type: string
     type: object
+  entities.UserProfileUpdateDTO:
+    properties:
+      address:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+    type: object
 host: project11a-backend-the-seal-division.onrender.com
 info:
   contact:
@@ -877,6 +888,46 @@ paths:
               type: string
             type: object
       summary: Добавить пользователя
+      tags:
+      - users
+  /users/{id}:
+    put:
+      consumes:
+      - application/json
+      description: Обновление данных пользователя (имя, фамилия, телефон, адрес) по
+        ID.
+      parameters:
+      - description: ID пользователя
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Обновляемые данные профиля
+        in: body
+        name: profile
+        required: true
+        schema:
+          $ref: '#/definitions/entities.UserProfileUpdateDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/entities.User'
+        "400":
+          description: Неверный ID или тело запроса
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Пользователь не найден
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Обновить профиль пользователя
       tags:
       - users
 schemes:
