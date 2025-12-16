@@ -14,6 +14,13 @@ type User struct {
 	RegDate   time.Time `json:"reg_date" gorm:"default:CURRENT_TIMESTAMP"`
 }
 
+type UserProfileUpdateDTO struct {
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	Phone     string `json:"phone"`
+	Address   string `json:"address"`
+}
+
 type Orders struct {
 	ID          int     `json:"id" gorm:"primaryKey;autoIncrement"`
 	Items       string  `json:"items"`

@@ -225,6 +225,21 @@ func addUserHandler(w http.ResponseWriter, r *http.Request) {
 	sql.AddUser(w, r)
 }
 
+// @Summary Обновить профиль пользователя
+// @Description Обновление данных пользователя (имя, фамилия, телефон, адрес) по ID.
+// @Tags users
+// @Accept json
+// @Produce json
+// @Param id path int true "ID пользователя"
+// @Param profile body entities.UserProfileUpdateDTO true "Обновляемые данные профиля"
+// @Success 200 {object} entities.User
+// @Failure 400 {object} map[string]string "Неверный ID или тело запроса"
+// @Failure 404 {object} map[string]string "Пользователь не найден"
+// @Router /users/{id} [put]
+func updateUserHandler(w http.ResponseWriter, r *http.Request) {
+	sql.UpdateUser(w, r)
+}
+
 // @Summary Создать заказ
 // @Description Создание нового заказа
 // @Tags orders
@@ -532,6 +547,14 @@ func main() {
 	http.HandleFunc("/users", corsHandler(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodPost {
 			addUserHandler(w, r)
+		} else {
+			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		}
+	}))
+
+	http.HandleFunc("/users/", corsHandler(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPut {
+			updateUserHandler(w, r)
 		} else {
 			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		}

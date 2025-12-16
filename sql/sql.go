@@ -445,6 +445,47 @@ func UpdateDiscounts(w http.ResponseWriter, r *http.Request) error {
 }
 
 // ==================== USERS ====================
+func UpdateUser(w http.ResponseWriter, r *http.Request) error {
+	idStr := strings.TrimPrefix(r.URL.Path, "/users/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid User ID", http.StatusBadRequest)
+		return err
+	}
+
+	var dto entities.UserProfileUpdateDTO
+	if err := json.NewDecoder(r.Body).Decode(&dto); err != nil {
+		http.Error(w, "Invalid request body: "+err.Error(), http.StatusBadRequest)
+		return err
+	}
+
+	var user entities.User
+	if err := db.First(&user, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "User not found", http.StatusNotFound)
+		} else {
+			http.Error(w, "Database error: "+err.Error(), http.StatusInternalServerError)
+		}
+		return err
+	}
+
+	user.FirstName = dto.FirstName
+	user.LastName = dto.LastName
+	user.Phone = dto.Phone
+	user.Address = dto.Address
+
+	if err := db.Save(&user).Error; err != nil {
+		http.Error(w, "Failed to save user: "+err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	user.Password = ""
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(user)
+	return nil
+}
 
 func AddUser(w http.ResponseWriter, r *http.Request) error {
 	var user entities.User
