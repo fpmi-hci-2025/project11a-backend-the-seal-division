@@ -266,6 +266,21 @@ func getOrderHandler(w http.ResponseWriter, r *http.Request) {
 	sql.GetOrder(w, r)
 }
 
+// @Summary Обновить заказ
+// @Description Полное обновление информации о заказе
+// @Tags orders
+// @Accept json
+// @Produce json
+// @Param id path int true "ID заказа"
+// @Param order body entities.Orders true "Обновленные данные заказа"
+// @Success 200 {object} entities.Orders
+// @Failure 400 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /orders/{id} [put]
+func updateOrderHandler(w http.ResponseWriter, r *http.Request) {
+	sql.UpdateOrder(w, r)
+}
+
 // @Summary Удалить заказ
 // @Description Удаление заказа по ID
 // @Tags orders
@@ -572,6 +587,8 @@ func main() {
 		switch r.Method {
 		case http.MethodGet:
 			getOrderHandler(w, r)
+		case http.MethodPut:
+			updateOrderHandler(w, r)
 		case http.MethodDelete:
 			deleteOrderHandler(w, r)
 		default:
