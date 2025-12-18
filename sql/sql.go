@@ -861,6 +861,56 @@ func GetAllDiscounts(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+// ==================== UPDATE ORDER ====================
+
+func UpdateOrder(w http.ResponseWriter, r *http.Request) error {
+	idStr := strings.TrimPrefix(r.URL.Path, "/orders/")
+	id, err := strconv.Atoi(idStr)
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return err
+	}
+
+	var updatedOrder entities.Orders
+	if err := json.NewDecoder(r.Body).Decode(&updatedOrder); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return err
+	}
+
+	var existingOrder entities.Orders
+	if err := db.First(&existingOrder, id).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Order not found", http.StatusNotFound)
+		} else {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+		}
+		return err
+	}
+
+	existingOrder.Status = updatedOrder.Status
+	existingOrder.Address = updatedOrder.Address
+	existingOrder.TotalAmount = updatedOrder.TotalAmount
+	existingOrder.Items = updatedOrder.Items
+	if updatedOrder.UserID > 0 {
+		existingOrder.UserID = updatedOrder.UserID
+	}
+
+	if err := db.Save(&existingOrder).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	if err := db.Preload("User").First(&existingOrder, id).Error; err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return err
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(existingOrder)
+	return nil
+}
+
 // ==================== HELPER FUNCTIONS ====================
 
 func returnJSON(w http.ResponseWriter, data interface{}) {
